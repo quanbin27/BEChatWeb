@@ -1,0 +1,13 @@
+syntax = "proto3";
+option go_package = "github.com/quanbin27/gRPC-Web-Chat/users";
+service UserService{
+  rpc Register(RegisterRequest) returns (RegisterResponse){}
+}
+message RegisterRequest{
+  string email = 1;
+  string password = 2;
+  string name = 3;
+}
+message RegisterResponse{
+  string status=1;
+}
