@@ -15,10 +15,10 @@ func NewHttpServer(addr string) *HttpServer {
 }
 func (s *HttpServer) Run() error {
 	e := echo.New()
-	//conn := NewGRPCClient(":9000")
-	//defer conn.Close()
+	conn := NewGRPCClient(":9000")
+	defer conn.Close()
 	subrouter := e.Group("/api/v1")
-	httpHandler := NewHttpHandler()
+	httpHandler := NewHttpHandler(conn)
 	httpHandler.RegisterRoutes(subrouter)
 	log.Println("Listening on: ", s.addr)
 	return http.ListenAndServe(s.addr, e)

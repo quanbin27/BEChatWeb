@@ -1,3 +1,7 @@
+run:
+	@go run cmd/api_gateway/main.go
+	@go run cmd/grpc_server/main.go
+
 gen:
 	@protoc \
 		--proto_path=protobuf "protobuf/users.proto" \

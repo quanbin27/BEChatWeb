@@ -64,7 +64,7 @@ func WithJWTAuth(store types.UserStore) echo.MiddlewareFunc {
 		}
 	}
 }
-func GetUserIDFromContext(c echo.Context) (int, error) {
+func GetUserIDFromContext(c echo.Context) (int32, error) {
 
 	user, ok := c.Get("user").(*types.User) // Giả sử types.User là kiểu dữ liệu của bạn
 	if !ok || user == nil {

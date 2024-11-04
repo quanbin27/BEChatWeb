@@ -3,6 +3,12 @@ option go_package = "github.com/quanbin27/gRPC-Web-Chat/users";
 service UserService{
   rpc Register(RegisterRequest) returns (RegisterResponse){}
 }
+message User{
+  int32 UserID = 1;
+  string Email = 2;
+  string Name = 3;
+  string Password = 4;
+}
 message RegisterRequest{
   string email = 1;
   string password = 2;

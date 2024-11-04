@@ -1,6 +1,9 @@
 package grpc
 
 import (
+	handler "github.com/quanbin27/gRPC-Web-Chat/services/users/handler/users"
+	"github.com/quanbin27/gRPC-Web-Chat/services/users/service"
+	users "github.com/quanbin27/gRPC-Web-Chat/services/users/store"
 	"google.golang.org/grpc"
 	"gorm.io/gorm"
 	"log"
@@ -21,7 +24,10 @@ func (s *gRPCServer) Run() error {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	log.Printf("gRPC pkg listening at %v", s.addr)
 	grpcServer := grpc.NewServer()
+	userStore := users.NewStore(s.db)
+	userService := service.NewUserService(userStore)
+	handler.NewGrpcUsersHandler(grpcServer, userService)
+	log.Printf("gRPC pkg listening at %v", s.addr)
 	return grpcServer.Serve(lis)
 }
