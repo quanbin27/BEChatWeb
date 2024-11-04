@@ -2,16 +2,18 @@ package grpc
 
 import (
 	"google.golang.org/grpc"
+	"gorm.io/gorm"
 	"log"
 	"net"
 )
 
 type gRPCServer struct {
 	addr string
+	db   *gorm.DB
 }
 
-func NewGRPCServer(addr string) *gRPCServer {
-	return &gRPCServer{addr: addr}
+func NewGRPCServer(addr string, db *gorm.DB) *gRPCServer {
+	return &gRPCServer{addr: addr, db: db}
 }
 func (s *gRPCServer) Run() error {
 	lis, err := net.Listen("tcp", s.addr)
