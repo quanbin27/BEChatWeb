@@ -2,18 +2,48 @@ syntax = "proto3";
 option go_package = "github.com/quanbin27/gRPC-Web-Chat/users";
 service UserService{
   rpc Register(RegisterRequest) returns (RegisterResponse){}
+  rpc Login(LoginRequest) returns (LoginResponse){}
+  rpc ChangeInfo(ChangeInfoRequest) returns (ChangeInfoResponse){}
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse){}
 }
 message User{
-  int32 UserID = 1;
+  int32 ID = 1;
   string Email = 2;
   string Name = 3;
   string Password = 4;
+  string Bio=5;
 }
 message RegisterRequest{
-  string email = 1;
-  string password = 2;
-  string name = 3;
+  string Email = 1;
+  string Password = 2;
+  string Name = 3;
 }
 message RegisterResponse{
-  string status=1;
+  string Status=1;
 }
+message LoginRequest{
+  string Email = 1;
+  string Password = 2;
+}
+message LoginResponse{
+  string Status=1;
+  string Token=2;
+}
+message ChangeInfoRequest{
+  int32 Id=1;
+  string Email=2;
+  string Name=3;
+  string Bio=4;
+}
+message ChangeInfoResponse{
+  string Status=1;
+}
+message ChangePasswordRequest{
+  int32 Id=1;
+  string OldPassword=2;
+  string NewPassword=3;
+}
+message ChangePasswordResponse{
+  string Status=1;
+}
+

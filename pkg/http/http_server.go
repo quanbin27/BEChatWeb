@@ -17,6 +17,8 @@ func (s *HttpServer) Run() error {
 	e := echo.New()
 	conn := NewGRPCClient(":9000")
 	defer conn.Close()
+	viewHandler := NewHandler()
+	viewHandler.RegisterRoutes(e)
 	subrouter := e.Group("/api/v1")
 	httpHandler := NewHttpHandler(conn)
 	httpHandler.RegisterRoutes(subrouter)

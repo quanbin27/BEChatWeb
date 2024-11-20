@@ -19,16 +19,52 @@ func NewGrpcUsersHandler(grpc *grpc.Server, userService types.UserService) {
 	users.RegisterUserServiceServer(grpc, grpcHandler)
 }
 func (h *UsersGrpcHandler) Register(ctx context.Context, req *users.RegisterRequest) (*users.RegisterResponse, error) {
-	user := users.User{
-		Email:    req.Email,
-		Password: req.Password,
-		Name:     req.Name,
-	}
-	err := h.userService.CreateUser(ctx, &user)
+	err := h.userService.CreateUser(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	res := &users.RegisterResponse{
+		Status: "success",
+	}
+	return res, nil
+}
+func (h *UsersGrpcHandler) Login(ctx context.Context, req *users.LoginRequest) (*users.LoginResponse, error) {
+	token, err := h.userService.CreateJWT(ctx, req)
+	if err != nil {
+		res := &users.LoginResponse{
+			Token:  "",
+			Status: "fail",
+		}
+		return res, err
+	}
+	res := &users.LoginResponse{
+		Token:  token,
+		Status: "success",
+	}
+	return res, nil
+}
+func (h *UsersGrpcHandler) ChangeInfo(ctx context.Context, req *users.ChangeInfoRequest) (*users.ChangeInfoResponse, error) {
+	err := h.userService.UpdateUser(ctx, req)
+	if err != nil {
+		res := &users.ChangeInfoResponse{
+			Status: "fail",
+		}
+		return res, err
+	}
+	res := &users.ChangeInfoResponse{
+		Status: "success",
+	}
+	return res, nil
+}
+func (h *UsersGrpcHandler) ChangePassword(ctx context.Context, req *users.ChangePasswordRequest) (*users.ChangePasswordResponse, error) {
+	err := h.userService.UpdatePassword(ctx, req)
+	if err != nil {
+		res := &users.ChangePasswordResponse{
+			Status: "fail",
+		}
+		return res, err
+	}
+	res := &users.ChangePasswordResponse{
 		Status: "success",
 	}
 	return res, nil

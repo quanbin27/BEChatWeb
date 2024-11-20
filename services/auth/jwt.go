@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-func CreateJWT(secret []byte, userID int, seconds int64) (string, error) {
+func CreateJWT(secret []byte, userID int32, seconds int64) (string, error) {
 	expiration := time.Second * time.Duration(seconds)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id":   strconv.Itoa(userID),
+		"user_id":   strconv.Itoa(int(userID)),
 		"expiredAt": time.Now().Add(expiration).Unix(),
 	})
 	tokenString, err := token.SignedString(secret)
@@ -24,7 +24,7 @@ func CreateJWT(secret []byte, userID int, seconds int64) (string, error) {
 	}
 	return tokenString, nil
 }
-func WithJWTAuth(store types.UserStore) echo.MiddlewareFunc {
+func WithJWTAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			// Lấy token từ header hoặc query
@@ -51,16 +51,9 @@ func WithJWTAuth(store types.UserStore) echo.MiddlewareFunc {
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
 			}
 
-			// Lấy thông tin người dùng từ store
-			u, err := store.GetUserByID(userID)
-			if err != nil {
-				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid user"})
-			}
+			c.Set("user_id", int32(userID))
 
-			// Lưu thông tin người dùng vào context
-			c.Set("user", u)
-			// Gọi hàm tiếp theo
-			return next(c) // Tiếp tục xử lý yêu cầu
+			return next(c)
 		}
 	}
 }
