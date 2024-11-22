@@ -1,10 +1,12 @@
 syntax = "proto3";
 option go_package = "github.com/quanbin27/gRPC-Web-Chat/users";
+import "google/protobuf/timestamp.proto";
 service UserService{
   rpc Register(RegisterRequest) returns (RegisterResponse){}
   rpc Login(LoginRequest) returns (LoginResponse){}
   rpc ChangeInfo(ChangeInfoRequest) returns (ChangeInfoResponse){}
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse){}
+  rpc GetUserInfo(GetUserInfoRequest) returns (User){}
 }
 message User{
   int32 ID = 1;
@@ -12,6 +14,7 @@ message User{
   string Name = 3;
   string Password = 4;
   string Bio=5;
+  google.protobuf.Timestamp CreatedAt=6;
 }
 message RegisterRequest{
   string Email = 1;
@@ -37,6 +40,9 @@ message ChangeInfoRequest{
 }
 message ChangeInfoResponse{
   string Status=1;
+  string Email=2;
+  string Name=3;
+  string Bio=4;
 }
 message ChangePasswordRequest{
   int32 Id=1;
@@ -45,5 +51,8 @@ message ChangePasswordRequest{
 }
 message ChangePasswordResponse{
   string Status=1;
+}
+message GetUserInfoRequest{
+  int32 ID=1;
 }
 

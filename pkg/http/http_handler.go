@@ -6,12 +6,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/quanbin27/gRPC-Web-Chat/services/auth"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/users"
-	"github.com/quanbin27/gRPC-Web-Chat/services/users/types"
+	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 	"github.com/quanbin27/gRPC-Web-Chat/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -28,6 +29,7 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.POST("/login", h.LoginHandler)
 	e.POST("/changeInfo", h.ChangeInfo, auth.WithJWTAuth())
 	e.POST("/changePassword", h.ChangePassword, auth.WithJWTAuth())
+	e.GET("/user/:id", h.GetUserInfo)
 }
 func (h *HttpHandler) ChangeInfo(c echo.Context) error {
 	var payload types.ChangeInfoPayLoad
@@ -85,6 +87,23 @@ func (h *HttpHandler) LoginHandler(c echo.Context) error {
 }
 func (h *HttpHandler) SayHello(c echo.Context) error {
 	return c.JSON(http.StatusOK, "hello world")
+}
+func (h *HttpHandler) GetUserInfo(c echo.Context) error {
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "bad request"})
+	}
+	userClient := users.NewUserServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	res, err := userClient.GetUserInfo(ctx, &users.GetUserInfoRequest{
+		ID: int32(userID),
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+
 }
 func (h *HttpHandler) RegisterHandler(c echo.Context) error {
 	var payload types.RegisterUserPayLoad

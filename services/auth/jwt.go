@@ -5,7 +5,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/quanbin27/gRPC-Web-Chat/config"
-	"github.com/quanbin27/gRPC-Web-Chat/services/users/types"
+	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 	"github.com/quanbin27/gRPC-Web-Chat/utils"
 	"net/http"
 	"strconv"

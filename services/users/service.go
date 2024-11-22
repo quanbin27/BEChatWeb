@@ -1,4 +1,4 @@
-package service
+package users
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/quanbin27/gRPC-Web-Chat/config"
 	"github.com/quanbin27/gRPC-Web-Chat/services/auth"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/users"
-	"github.com/quanbin27/gRPC-Web-Chat/services/users/types"
+	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 )
 
 type UserService struct {
@@ -71,4 +71,11 @@ func (s *UserService) UpdatePassword(ctx context.Context, update *users.ChangePa
 		return errors.New("Failed to update user")
 	}
 	return nil
+}
+func (s *UserService) GetUserByID(ctx context.Context, id int32) (*types.User, error) {
+	user, err := s.userStore.GetUserByID(id)
+	if err != nil {
+		return nil, errors.New("User not found")
+	}
+	return user, nil
 }

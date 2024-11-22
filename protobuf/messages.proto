@@ -1,0 +1,12 @@
+syntax = "proto3";
+option go_package = "github.com/quanbin27/gRPC-Web-Chat/messages";
+service MessageService{
+
+}
+message Message{
+  int32 ID = 1;
+  int32 UserID = 2;
+  int32 GroupID = 3;
+  string content = 4;
+  string MessageReplyID=5;
+}

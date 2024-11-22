@@ -4,7 +4,7 @@ import (
 	"github.com/quanbin27/gRPC-Web-Chat/config"
 	"github.com/quanbin27/gRPC-Web-Chat/db"
 	"github.com/quanbin27/gRPC-Web-Chat/pkg/grpc"
-	"github.com/quanbin27/gRPC-Web-Chat/services/users/types"
+	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 	"gorm.io/gorm"
 	"log"
 )

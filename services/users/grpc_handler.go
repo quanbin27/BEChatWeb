@@ -1,10 +1,11 @@
-package handler
+package users
 
 import (
 	"context"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/users"
-	"github.com/quanbin27/gRPC-Web-Chat/services/users/types"
+	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type UsersGrpcHandler struct {
@@ -53,6 +54,9 @@ func (h *UsersGrpcHandler) ChangeInfo(ctx context.Context, req *users.ChangeInfo
 	}
 	res := &users.ChangeInfoResponse{
 		Status: "success",
+		Bio:    req.Bio,
+		Name:   req.Name,
+		Email:  req.Email,
 	}
 	return res, nil
 }
@@ -66,6 +70,20 @@ func (h *UsersGrpcHandler) ChangePassword(ctx context.Context, req *users.Change
 	}
 	res := &users.ChangePasswordResponse{
 		Status: "success",
+	}
+	return res, nil
+}
+func (h *UsersGrpcHandler) GetUserInfo(ctx context.Context, req *users.GetUserInfoRequest) (*users.User, error) {
+	dbUser, err := h.userService.GetUserByID(ctx, req.ID)
+	if err != nil {
+		return nil, err
+	}
+	res := &users.User{
+		ID:        dbUser.ID,
+		Name:      dbUser.Name,
+		Email:     dbUser.Email,
+		Bio:       dbUser.Bio,
+		CreatedAt: timestamppb.New(dbUser.CreatedAt),
 	}
 	return res, nil
 }

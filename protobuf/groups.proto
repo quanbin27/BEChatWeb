@@ -1,0 +1,34 @@
+ syntax = "proto3";
+option go_package = "github.com/quanbin27/gRPC-Web-Chat/groups";
+service GroupService{
+  rpc ChangeNameGroup(ChangeNameRequest) returns (ChangeNameResponse){}
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse){}
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse){}
+}
+message group{
+  int32 ID = 1;
+  string Name = 2;
+  int32 MemberCount = 3;
+}
+message ChangeNameRequest{
+  int32 UserID=1;
+  int32 GroupID=2;
+  string Name=3;
+}
+message ChangeNameResponse{
+  string Status=1;
+  string Name=2;
+}
+message CreateGroupRequest{
+  string Name=1;
+}
+message CreateGroupResponse{
+  string Status=1;
+}
+message DeleteGroupRequest{
+  int32 UserID=1;
+  int32 GroupID=2;
+}
+message DeleteGroupResponse{
+  string status=1;
+}
