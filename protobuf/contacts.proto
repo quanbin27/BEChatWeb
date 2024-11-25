@@ -5,12 +5,15 @@ service ContactService {
   rpc RemoveContact(RemoveContactRequest) returns (RemoveContactResponse);
   rpc AcceptContact(AcceptContactRequest) returns (AcceptContactResponse);
   rpc GetContacts(GetContactsRequest) returns (GetContactsResponse);
+  rpc GetPendingSentContacts(GetPendingSentContactsRequest) returns (GetPendingSentContactsResponse);
+  rpc GetPendingReceivedContacts(GetPendingReceivedContactsRequest) returns (GetPendingReceivedContactsResponse);
+  rpc RejectContact(RejectContactRequest) returns (RejectContactResponse);
 }
 
 message Contact {
   int32 user_id = 1;
   int32 contact_user_id = 2;
-  string status = 3; // PENDING, ACCEPTED
+  string status = 3; // PENDING, ACCEPTED,REJECTED
 }
 
 message AddContactRequest {
@@ -48,4 +51,27 @@ message GetContactsResponse {
   repeated Contact contacts = 1;
 }
 
+message GetPendingSentContactsRequest {
+  int32 user_id = 1;
+}
 
+message GetPendingSentContactsResponse {
+  repeated Contact contacts = 1;
+}
+
+message GetPendingReceivedContactsRequest {
+  int32 user_id = 1;
+}
+
+message GetPendingReceivedContactsResponse {
+  repeated Contact contacts = 1;
+}
+
+message RejectContactRequest {
+  int32 user_id = 1;
+  int32 contact_user_id = 2;
+}
+
+message RejectContactResponse {
+  string status = 1;
+}

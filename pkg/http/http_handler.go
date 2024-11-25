@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/quanbin27/gRPC-Web-Chat/services/auth"
+	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/contacts"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/groups"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/messages"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/users"
@@ -47,7 +48,205 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.POST("/message", h.SendMessageHandler, auth.WithJWTAuth())
 	e.DELETE("/message", h.DeleteMessageHandler, auth.WithJWTAuth())
 	e.GET("/group/:id/latest-message", h.GetLatestMessagesHandler, auth.WithJWTAuth())
+	e.POST("/contact", h.AddContactHandler, auth.WithJWTAuth())
+	e.DELETE("/contact", h.RemoveContactHandler, auth.WithJWTAuth())
+	e.POST("/contact/accept", h.AcceptContactHandler, auth.WithJWTAuth())
+	e.GET("/contacts", h.GetContactsHandler, auth.WithJWTAuth())
+	e.GET("/contact/pending-sent", h.GetPendingSentContactsHandler, auth.WithJWTAuth())
+	e.GET("/contact/pending-received", h.GetPendingReceivedContactsHandler, auth.WithJWTAuth())
+	e.POST("/contact/reject", h.RejectContactHandler, auth.WithJWTAuth())
 }
+func (h *HttpHandler) GetPendingSentContactsHandler(c echo.Context) error {
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	contactClient := contacts.NewContactServiceClient(h.grpcClient)
+	res, err := contactClient.GetPendingSentContacts(ctx, &contacts.GetPendingSentContactsRequest{
+		UserId: userID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get pending sent contacts: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) GetPendingReceivedContactsHandler(c echo.Context) error {
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	contactClient := contacts.NewContactServiceClient(h.grpcClient)
+
+	res, err := contactClient.GetPendingReceivedContacts(ctx, &contacts.GetPendingReceivedContactsRequest{
+		UserId: userID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get pending received contacts: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) RejectContactHandler(c echo.Context) error {
+	var payload struct {
+		ContactUserID int32 `json:"contact_user_id"`
+	}
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+	}
+
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	contactClient := contacts.NewContactServiceClient(h.grpcClient)
+	res, err := contactClient.RejectContact(ctx, &contacts.RejectContactRequest{
+		UserId:        userID,
+		ContactUserId: payload.ContactUserID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to reject contact: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) AddContactHandler(c echo.Context) error {
+	// Bind dữ liệu từ payload request
+	var payload types.AddContactPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+	}
+
+	// Kiểm tra tính hợp lệ của payload (ví dụ UserID, ContactUserID)
+	if err := utils.Validate.Struct(&payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errors[0].Error()})
+	}
+
+	// Lấy userID từ context (được thiết lập từ middleware)
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Tạo context và thực hiện yêu cầu
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	// Gọi gRPC service để thêm liên hệ
+	contactClient := contacts.NewContactServiceClient(h.grpcClient)
+	res, err := contactClient.AddContact(ctx, &contacts.AddContactRequest{
+		UserId:        userID,
+		ContactUserId: payload.ContactUserID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to add contact: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) RemoveContactHandler(c echo.Context) error {
+	// Bind dữ liệu từ payload request
+	var payload types.RemoveContactPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+	}
+
+	// Kiểm tra tính hợp lệ của payload (ví dụ UserID, ContactUserID)
+	if err := utils.Validate.Struct(&payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errors[0].Error()})
+	}
+
+	// Lấy userID từ context (được thiết lập từ middleware)
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Tạo context và thực hiện yêu cầu
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	// Gọi gRPC service để xóa liên hệ
+	contactClient := contacts.NewContactServiceClient(h.grpcClient)
+	_, err := contactClient.RemoveContact(ctx, &contacts.RemoveContactRequest{
+		UserId:        userID,
+		ContactUserId: payload.ContactUserID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to remove contact: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Contact removed successfully"})
+}
+func (h *HttpHandler) AcceptContactHandler(c echo.Context) error {
+	// Bind dữ liệu từ payload request
+	var payload types.AcceptContactPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+	}
+
+	// Kiểm tra tính hợp lệ của payload (ví dụ UserID, ContactUserID)
+	if err := utils.Validate.Struct(&payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errors[0].Error()})
+	}
+
+	// Lấy userID từ context (được thiết lập từ middleware)
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Tạo context và thực hiện yêu cầu
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	// Gọi gRPC service để chấp nhận liên hệ
+	contactClient := contacts.NewContactServiceClient(h.grpcClient)
+	_, err := contactClient.AcceptContact(ctx, &contacts.AcceptContactRequest{
+		UserId:        userID,
+		ContactUserId: payload.ContactUserID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to accept contact: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Contact accepted successfully"})
+}
+func (h *HttpHandler) GetContactsHandler(c echo.Context) error {
+	// Lấy userID từ context (được thiết lập từ middleware)
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Tạo context và thực hiện yêu cầu
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	// Gọi gRPC service để lấy danh sách liên hệ
+	contactClient := contacts.NewContactServiceClient(h.grpcClient)
+	res, err := contactClient.GetContacts(ctx, &contacts.GetContactsRequest{
+		UserId: userID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get contacts: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{"contacts": res.Contacts})
+}
+
 func (h *HttpHandler) GetLatestMessagesHandler(c echo.Context) error {
 	groupID, err := strconv.Atoi(c.Param("id"))
 	if err != nil || groupID <= 0 {

@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/contacts"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/groups"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/messages"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/users"
@@ -41,6 +42,9 @@ type ContactStore interface {
 	AddContact(contact *Contact) error
 	RemoveContact(userID, contactUserID int32) error
 	AcceptContact(userID, contactUserID int32) error
+	RejectContact(userID, contactUserID int32) error
+	GetPendingReceivedContacts(userID int32) ([]Contact, error)
+	GetPendingSentContacts(userID int32) ([]Contact, error)
 }
 type UserService interface {
 	CreateUser(ctx context.Context, user *users.RegisterRequest) error
@@ -68,6 +72,13 @@ type MessageService interface {
 	SendMessage(ctx context.Context, req *messages.SendMessageRequest) (int32, time.Time, error)
 }
 type ContactService interface {
+	AddContact(ctx context.Context, req *contacts.AddContactRequest) error
+	RemoveContact(ctx context.Context, req *contacts.RemoveContactRequest) error
+	AcceptContact(ctx context.Context, req *contacts.AcceptContactRequest) error
+	GetContacts(ctx context.Context, req *contacts.GetContactsRequest) ([]*contacts.Contact, error)
+	GetPendingSentContacts(ctx context.Context, userID int32) ([]Contact, error)
+	GetPendingReceivedContacts(ctx context.Context, userID int32) ([]Contact, error)
+	RejectContact(ctx context.Context, userID, contactUserID int32) error
 }
 
 // ------ USER ------
@@ -179,9 +190,20 @@ type Contact struct {
 	ID            int32     `gorm:"primaryKey;autoIncrement"`
 	UserID        int32     `gorm:"not null;uniqueIndex:unique_friendship"`
 	ContactUserID int32     `gorm:"not null;uniqueIndex:unique_friendship"`
-	Status        string    `gorm:"type:enum('PENDING', 'ACCEPTED');default:'PENDING';not null"`
+	Status        string    `gorm:"type:enum('PENDING', 'ACCEPTED','REJECTED');default:'PENDING';not null"`
 	CreatedAt     time.Time `gorm:"autoCreateTime"`
 	UpdatedAt     time.Time `gorm:"autoUpdateTime"`
 	User          User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	ContactUser   User      `gorm:"foreignKey:ContactUserID;constraint:OnDelete:CASCADE"`
+}
+type AddContactPayload struct {
+	ContactUserID int32 `json:"contact_user_id" validate:"required"`
+}
+
+type RemoveContactPayload struct {
+	ContactUserID int32 `json:"contact_user_id" validate:"required"`
+}
+
+type AcceptContactPayload struct {
+	ContactUserID int32 `json:"contact_user_id" validate:"required"`
 }

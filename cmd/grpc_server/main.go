@@ -16,7 +16,7 @@ func main() {
 		log.Fatal(err)
 	}
 	initStorage(db)
-	db.AutoMigrate(types.User{}, types.Group{}, types.GroupDetail{}, types.Role{}, types.Message{})
+	db.AutoMigrate(types.User{}, types.Group{}, types.GroupDetail{}, types.Role{}, types.Message{}, types.Contact{})
 	grpcServer := grpc.NewGRPCServer(":9000", db)
 	if err := grpcServer.Run(); err != nil {
 		log.Fatal(err)

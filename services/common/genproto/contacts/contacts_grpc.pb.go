@@ -19,8 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ContactService_AddContact_FullMethodName    = "/ContactService/AddContact"
-	ContactService_RemoveContact_FullMethodName = "/ContactService/RemoveContact"
+	ContactService_AddContact_FullMethodName                 = "/ContactService/AddContact"
+	ContactService_RemoveContact_FullMethodName              = "/ContactService/RemoveContact"
+	ContactService_AcceptContact_FullMethodName              = "/ContactService/AcceptContact"
+	ContactService_GetContacts_FullMethodName                = "/ContactService/GetContacts"
+	ContactService_GetPendingSentContacts_FullMethodName     = "/ContactService/GetPendingSentContacts"
+	ContactService_GetPendingReceivedContacts_FullMethodName = "/ContactService/GetPendingReceivedContacts"
+	ContactService_RejectContact_FullMethodName              = "/ContactService/RejectContact"
 )
 
 // ContactServiceClient is the client API for ContactService service.
@@ -29,6 +34,11 @@ const (
 type ContactServiceClient interface {
 	AddContact(ctx context.Context, in *AddContactRequest, opts ...grpc.CallOption) (*AddContactResponse, error)
 	RemoveContact(ctx context.Context, in *RemoveContactRequest, opts ...grpc.CallOption) (*RemoveContactResponse, error)
+	AcceptContact(ctx context.Context, in *AcceptContactRequest, opts ...grpc.CallOption) (*AcceptContactResponse, error)
+	GetContacts(ctx context.Context, in *GetContactsRequest, opts ...grpc.CallOption) (*GetContactsResponse, error)
+	GetPendingSentContacts(ctx context.Context, in *GetPendingSentContactsRequest, opts ...grpc.CallOption) (*GetPendingSentContactsResponse, error)
+	GetPendingReceivedContacts(ctx context.Context, in *GetPendingReceivedContactsRequest, opts ...grpc.CallOption) (*GetPendingReceivedContactsResponse, error)
+	RejectContact(ctx context.Context, in *RejectContactRequest, opts ...grpc.CallOption) (*RejectContactResponse, error)
 }
 
 type contactServiceClient struct {
@@ -59,12 +69,67 @@ func (c *contactServiceClient) RemoveContact(ctx context.Context, in *RemoveCont
 	return out, nil
 }
 
+func (c *contactServiceClient) AcceptContact(ctx context.Context, in *AcceptContactRequest, opts ...grpc.CallOption) (*AcceptContactResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AcceptContactResponse)
+	err := c.cc.Invoke(ctx, ContactService_AcceptContact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contactServiceClient) GetContacts(ctx context.Context, in *GetContactsRequest, opts ...grpc.CallOption) (*GetContactsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetContactsResponse)
+	err := c.cc.Invoke(ctx, ContactService_GetContacts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contactServiceClient) GetPendingSentContacts(ctx context.Context, in *GetPendingSentContactsRequest, opts ...grpc.CallOption) (*GetPendingSentContactsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPendingSentContactsResponse)
+	err := c.cc.Invoke(ctx, ContactService_GetPendingSentContacts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contactServiceClient) GetPendingReceivedContacts(ctx context.Context, in *GetPendingReceivedContactsRequest, opts ...grpc.CallOption) (*GetPendingReceivedContactsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPendingReceivedContactsResponse)
+	err := c.cc.Invoke(ctx, ContactService_GetPendingReceivedContacts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contactServiceClient) RejectContact(ctx context.Context, in *RejectContactRequest, opts ...grpc.CallOption) (*RejectContactResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RejectContactResponse)
+	err := c.cc.Invoke(ctx, ContactService_RejectContact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContactServiceServer is the server API for ContactService service.
 // All implementations must embed UnimplementedContactServiceServer
 // for forward compatibility.
 type ContactServiceServer interface {
 	AddContact(context.Context, *AddContactRequest) (*AddContactResponse, error)
 	RemoveContact(context.Context, *RemoveContactRequest) (*RemoveContactResponse, error)
+	AcceptContact(context.Context, *AcceptContactRequest) (*AcceptContactResponse, error)
+	GetContacts(context.Context, *GetContactsRequest) (*GetContactsResponse, error)
+	GetPendingSentContacts(context.Context, *GetPendingSentContactsRequest) (*GetPendingSentContactsResponse, error)
+	GetPendingReceivedContacts(context.Context, *GetPendingReceivedContactsRequest) (*GetPendingReceivedContactsResponse, error)
+	RejectContact(context.Context, *RejectContactRequest) (*RejectContactResponse, error)
 	mustEmbedUnimplementedContactServiceServer()
 }
 
@@ -80,6 +145,21 @@ func (UnimplementedContactServiceServer) AddContact(context.Context, *AddContact
 }
 func (UnimplementedContactServiceServer) RemoveContact(context.Context, *RemoveContactRequest) (*RemoveContactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveContact not implemented")
+}
+func (UnimplementedContactServiceServer) AcceptContact(context.Context, *AcceptContactRequest) (*AcceptContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcceptContact not implemented")
+}
+func (UnimplementedContactServiceServer) GetContacts(context.Context, *GetContactsRequest) (*GetContactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContacts not implemented")
+}
+func (UnimplementedContactServiceServer) GetPendingSentContacts(context.Context, *GetPendingSentContactsRequest) (*GetPendingSentContactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPendingSentContacts not implemented")
+}
+func (UnimplementedContactServiceServer) GetPendingReceivedContacts(context.Context, *GetPendingReceivedContactsRequest) (*GetPendingReceivedContactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPendingReceivedContacts not implemented")
+}
+func (UnimplementedContactServiceServer) RejectContact(context.Context, *RejectContactRequest) (*RejectContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RejectContact not implemented")
 }
 func (UnimplementedContactServiceServer) mustEmbedUnimplementedContactServiceServer() {}
 func (UnimplementedContactServiceServer) testEmbeddedByValue()                        {}
@@ -138,6 +218,96 @@ func _ContactService_RemoveContact_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContactService_AcceptContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).AcceptContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_AcceptContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).AcceptContact(ctx, req.(*AcceptContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContactService_GetContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetContactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).GetContacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_GetContacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).GetContacts(ctx, req.(*GetContactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContactService_GetPendingSentContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPendingSentContactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).GetPendingSentContacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_GetPendingSentContacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).GetPendingSentContacts(ctx, req.(*GetPendingSentContactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContactService_GetPendingReceivedContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPendingReceivedContactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).GetPendingReceivedContacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_GetPendingReceivedContacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).GetPendingReceivedContacts(ctx, req.(*GetPendingReceivedContactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContactService_RejectContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RejectContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).RejectContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_RejectContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).RejectContact(ctx, req.(*RejectContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContactService_ServiceDesc is the grpc.ServiceDesc for ContactService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +322,26 @@ var ContactService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveContact",
 			Handler:    _ContactService_RemoveContact_Handler,
+		},
+		{
+			MethodName: "AcceptContact",
+			Handler:    _ContactService_AcceptContact_Handler,
+		},
+		{
+			MethodName: "GetContacts",
+			Handler:    _ContactService_GetContacts_Handler,
+		},
+		{
+			MethodName: "GetPendingSentContacts",
+			Handler:    _ContactService_GetPendingSentContacts_Handler,
+		},
+		{
+			MethodName: "GetPendingReceivedContacts",
+			Handler:    _ContactService_GetPendingReceivedContacts_Handler,
+		},
+		{
+			MethodName: "RejectContact",
+			Handler:    _ContactService_RejectContact_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
