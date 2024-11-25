@@ -32,11 +32,7 @@ func (h *UsersGrpcHandler) Register(ctx context.Context, req *users.RegisterRequ
 func (h *UsersGrpcHandler) Login(ctx context.Context, req *users.LoginRequest) (*users.LoginResponse, error) {
 	token, err := h.userService.CreateJWT(ctx, req)
 	if err != nil {
-		res := &users.LoginResponse{
-			Token:  "",
-			Status: "fail",
-		}
-		return res, err
+		return nil, err
 	}
 	res := &users.LoginResponse{
 		Token:  token,
@@ -47,10 +43,7 @@ func (h *UsersGrpcHandler) Login(ctx context.Context, req *users.LoginRequest) (
 func (h *UsersGrpcHandler) ChangeInfo(ctx context.Context, req *users.ChangeInfoRequest) (*users.ChangeInfoResponse, error) {
 	err := h.userService.UpdateUser(ctx, req)
 	if err != nil {
-		res := &users.ChangeInfoResponse{
-			Status: "fail",
-		}
-		return res, err
+		return nil, err
 	}
 	res := &users.ChangeInfoResponse{
 		Status: "success",
@@ -63,10 +56,7 @@ func (h *UsersGrpcHandler) ChangeInfo(ctx context.Context, req *users.ChangeInfo
 func (h *UsersGrpcHandler) ChangePassword(ctx context.Context, req *users.ChangePasswordRequest) (*users.ChangePasswordResponse, error) {
 	err := h.userService.UpdatePassword(ctx, req)
 	if err != nil {
-		res := &users.ChangePasswordResponse{
-			Status: "fail",
-		}
-		return res, err
+		return nil, err
 	}
 	res := &users.ChangePasswordResponse{
 		Status: "success",

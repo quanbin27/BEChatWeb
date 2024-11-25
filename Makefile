@@ -1,7 +1,7 @@
-run:
+run_gateway:
 	@go run cmd/api_gateway/main.go
+run_grpc:
 	@go run cmd/grpc_server/main.go
-
 gen_user:
 	@protoc \
 		--proto_path=protobuf "protobuf/users.proto" \
@@ -17,3 +17,8 @@ gen_message:
     		--proto_path=protobuf "protobuf/messages.proto" \
     		--go_out=services/common/genproto/messages --go_opt=paths=source_relative \
       	--go-grpc_out=services/common/genproto/messages --go-grpc_opt=paths=source_relative
+gen_contact:
+	@protoc \
+    		--proto_path=protobuf "protobuf/contacts.proto" \
+    		--go_out=services/common/genproto/contacts --go_opt=paths=source_relative \
+      	--go-grpc_out=services/common/genproto/contacts --go-grpc_opt=paths=source_relative

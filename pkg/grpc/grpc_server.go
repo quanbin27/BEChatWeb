@@ -30,7 +30,7 @@ func (s *gRPCServer) Run() error {
 	groupStore := groups.NewStore(s.db)
 	groupService := groups.NewGroupService(groupStore)
 	messageStore := messages.NewStore(s.db)
-	messageService := messages.NewMessageService(messageStore)
+	messageService := messages.NewMessageService(messageStore, groupStore)
 	users.NewGrpcUsersHandler(grpcServer, userService)
 	groups.NewGrpcGroupsHandler(grpcServer, groupService)
 	messages.NewGrpcGroupsHandler(grpcServer, messageService)

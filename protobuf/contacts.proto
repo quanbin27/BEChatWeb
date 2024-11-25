@@ -1,0 +1,51 @@
+syntax = "proto3";
+option go_package = "github.com/quanbin27/gRPC-Web-Chat/contacts";
+service ContactService {
+  rpc AddContact(AddContactRequest) returns (AddContactResponse);
+  rpc RemoveContact(RemoveContactRequest) returns (RemoveContactResponse);
+  rpc AcceptContact(AcceptContactRequest) returns (AcceptContactResponse);
+  rpc GetContacts(GetContactsRequest) returns (GetContactsResponse);
+}
+
+message Contact {
+  int32 user_id = 1;
+  int32 contact_user_id = 2;
+  string status = 3; // PENDING, ACCEPTED
+}
+
+message AddContactRequest {
+  int32 user_id = 1;
+  int32 contact_user_id = 2;
+}
+
+message AddContactResponse {
+  string status = 1;
+}
+
+message RemoveContactRequest {
+  int32 user_id = 1;
+  int32 contact_user_id = 2;
+}
+
+message RemoveContactResponse {
+  string status = 1;
+}
+
+message AcceptContactRequest {
+  int32 user_id = 1;
+  int32 contact_user_id = 2;
+}
+
+message AcceptContactResponse {
+  string status = 1;
+}
+
+message GetContactsRequest {
+  int32 user_id = 1;
+}
+
+message GetContactsResponse {
+  repeated Contact contacts = 1;
+}
+
+

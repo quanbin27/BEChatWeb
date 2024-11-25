@@ -2,9 +2,12 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/quanbin27/gRPC-Web-Chat/services/auth"
+	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/groups"
+	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/messages"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/users"
 	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 	"github.com/quanbin27/gRPC-Web-Chat/utils"
@@ -30,6 +33,385 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.POST("/changeInfo", h.ChangeInfo, auth.WithJWTAuth())
 	e.POST("/changePassword", h.ChangePassword, auth.WithJWTAuth())
 	e.GET("/user/:id", h.GetUserInfo)
+	e.GET("/group/:id", h.GetGroupInfo)
+	e.POST("/group", h.CreateGroupHandler, auth.WithJWTAuth())
+	e.DELETE("/group/:id", h.DeleteGroupHandler, auth.WithJWTAuth())
+	e.PATCH("/group/:id/name", h.ChangeNameGroupHandler, auth.WithJWTAuth())
+	e.POST("/group/:id/member", h.AddMemberHandler, auth.WithJWTAuth())
+	e.DELETE("/group/:id/member", h.KickMemberHandler, auth.WithJWTAuth())
+	e.PATCH("/group/:id/change-admin", h.ChangeAdminHandler, auth.WithJWTAuth())
+	e.POST("/group/:id/leave", h.LeaveGroupHandler, auth.WithJWTAuth())
+	e.GET("/group/:id/member", h.GetListMemberHandler, auth.WithJWTAuth())
+	e.GET("/user/group", h.GetListUserGroupsHandler, auth.WithJWTAuth())
+	e.GET("/group/:id/message", h.GetMessagesHandler, auth.WithJWTAuth())
+	e.POST("/message", h.SendMessageHandler, auth.WithJWTAuth())
+	e.DELETE("/message", h.DeleteMessageHandler, auth.WithJWTAuth())
+	e.GET("/group/:id/latest-message", h.GetLatestMessagesHandler, auth.WithJWTAuth())
+}
+func (h *HttpHandler) GetLatestMessagesHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || groupID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid group ID"})
+	}
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	messageClient := messages.NewMessageServiceClient(h.grpcClient)
+	res, err := messageClient.GetLatestMessages(ctx, &messages.GetLatestMessagesRequest{
+		GroupID: int32(groupID),
+		UserID:  userID,
+	})
+	if err != nil {
+		if err.Error() == "rpc error: code = PermissionDenied desc = User is not authorized to view messages in this group" {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": "You do not have permission to access this group"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get latest message: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) SendMessageHandler(c echo.Context) error {
+	var payload types.SendMessagePayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+	}
+
+	if err := utils.Validate.Struct(&payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errors[0].Error()})
+	}
+
+	userID, ok := c.Get("user_id").(int32)
+	if !ok || userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	messageClient := messages.NewMessageServiceClient(h.grpcClient)
+	res, err := messageClient.SendMessage(ctx, &messages.SendMessageRequest{
+		UserID:         userID,
+		GroupID:        payload.GroupID,
+		Content:        payload.Content,
+		MessageReplyID: getReplyMessageID(payload.MessageReplyID),
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to send message: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) DeleteMessageHandler(c echo.Context) error {
+	var payload types.DeleteMessagePayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+	}
+	if err := utils.Validate.Struct(&payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errors[0].Error()})
+	}
+
+	userID, ok := c.Get("user_id").(int32)
+	if !ok || userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	messageClient := messages.NewMessageServiceClient(h.grpcClient)
+	_, err := messageClient.DeleteMessage(ctx, &messages.DeleteMessageRequest{
+		UserID:    userID,
+		MessageID: payload.MessageID,
+	})
+	if err != nil {
+		if err.Error() == "rpc error: code = PermissionDenied desc = User is not authorized to delete this message" {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": "You do not have permission to delete this message"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to delete message: " + err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Message deleted successfully"})
+}
+
+func getReplyMessageID(replyMessageID *int32) int32 {
+	if replyMessageID != nil {
+		return *replyMessageID
+	}
+	return 0
+}
+
+func (h *HttpHandler) GetMessagesHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || groupID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid group ID"})
+	}
+
+	userID := c.Get("user_id").(int32)
+	if userID <= 0 {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	// Gọi MessageService thông qua gRPC
+	groupClient := messages.NewMessageServiceClient(h.grpcClient)
+	res, err := groupClient.GetMessages(ctx, &messages.GetMessagesRequest{
+		GroupID: int32(groupID),
+		UserID:  userID,
+	})
+	if err != nil {
+		grpcErr := err.Error()
+		if grpcErr == "rpc error: code = PermissionDenied desc = User is not authorized to view messages in this group" {
+			return c.JSON(http.StatusForbidden, map[string]string{"error": "You do not have permission to access this group"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get messages: " + grpcErr})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (h *HttpHandler) GetListMemberHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || groupID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid group ID"})
+	}
+
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	res, err := groupClient.GetListMember(ctx, &groups.GetListMemberRequest{
+		GroupID: int32(groupID),
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) GetListUserGroupsHandler(c echo.Context) error {
+	userID, ok := c.Get("user_id").(int32)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	res, err := groupClient.GetListUserGroup(ctx, &groups.GetListUserGroupRequest{
+		UserID: userID,
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func (h *HttpHandler) LeaveGroupHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || groupID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid group ID"})
+	}
+
+	userID, ok := c.Get("user_id").(int32)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	_, err = groupClient.LeaveGroup(ctx, &groups.LeaveGroupRequest{
+		UserID:  userID,
+		GroupID: int32(groupID),
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"status": "Left group successfully"})
+}
+
+func (h *HttpHandler) ChangeAdminHandler(c echo.Context) error {
+	var payload types.ChangeAdminPayload
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || groupID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid group ID"})
+	}
+	userID, ok := c.Get("user_id").(int32)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+	if err := c.Bind(&payload); err != nil || payload.NewAdminID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	_, err = groupClient.ChangeAdmin(ctx, &groups.ChangeAdminRequest{
+		UserID:     userID,
+		GroupID:    int32(groupID),
+		NewAdminID: payload.NewAdminID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"status": "Admin changed successfully"})
+}
+
+func (h *HttpHandler) KickMemberHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || groupID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid group ID",
+		})
+	}
+	userID, ok := c.Get("user_id").(int32)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"error": "Unauthorized",
+		})
+	}
+	var payload types.KickMemberFromGroupPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid request body",
+		})
+	}
+	if payload.MemberID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid Member ID",
+		})
+	}
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	res, err := groupClient.KickMember(ctx, &groups.KickMemberRequest{
+		UserID:   userID,
+		GroupID:  int32(groupID),
+		MemberID: payload.MemberID,
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("Failed to kick member: %v", err),
+		})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (h *HttpHandler) AddMemberHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil || groupID <= 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid group ID"})
+	}
+	userID, ok := c.Get("user_id").(int32)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+	var payload types.AddMemberToGroupPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+	if len(payload.MemberIds) == 0 {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Member IDs cannot be empty"})
+	}
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	res, err := groupClient.AddMember(ctx, &groups.AddMemberRequest{
+		UserID:    userID,
+		GroupID:   int32(groupID),
+		MemberIDs: payload.MemberIds,
+	})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (h *HttpHandler) GetGroupInfo(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "bad request"})
+	}
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	res, err := groupClient.GetGroupInfo(ctx, &groups.GetGroupInfoRequest{
+		GroupID: int32(groupID),
+	})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) DeleteGroupHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid group ID")
+	}
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	res, err := groupClient.DeleteGroup(ctx, &groups.DeleteGroupRequest{
+		GroupID: int32(groupID),
+		UserID:  c.Get("user_id").(int32),
+	})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) ChangeNameGroupHandler(c echo.Context) error {
+	groupID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid group ID")
+	}
+	var payload types.ChangeNameGroupPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "bad request name"})
+	}
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	res, err := groupClient.ChangeNameGroup(ctx, &groups.ChangeNameRequest{
+		GroupID: int32(groupID),
+		UserID:  c.Get("user_id").(int32),
+		Name:    payload.Name,
+	})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) CreateGroupHandler(c echo.Context) error {
+	var payload types.CreateGroupPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "bad request name"})
+	}
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	res, err := groupClient.CreateGroup(ctx, &groups.CreateGroupRequest{
+		UserID:    c.Get("user_id").(int32),
+		Name:      payload.Name,
+		MemberIDs: payload.MemberIds,
+	})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
 }
 func (h *HttpHandler) ChangeInfo(c echo.Context) error {
 	var payload types.ChangeInfoPayLoad

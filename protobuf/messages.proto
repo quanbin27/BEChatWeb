@@ -1,12 +1,49 @@
 syntax = "proto3";
 option go_package = "github.com/quanbin27/gRPC-Web-Chat/messages";
-service MessageService{
+import "google/protobuf/timestamp.proto";
 
+service MessageService{
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+  rpc GetLatestMessages(GetLatestMessagesRequest) returns (GetLatestMessagesResponse);
+  rpc DeleteMessage(DeleteMessageRequest) returns (DeleteMessageResponse);
 }
 message Message{
   int32 ID = 1;
   int32 UserID = 2;
   int32 GroupID = 3;
-  string content = 4;
-  string MessageReplyID=5;
+  string Content = 4;
+  int32 MessageReplyID=5;
+  google.protobuf.Timestamp CreatedAt = 6;
+}
+message SendMessageRequest {
+  int32 UserID = 1;
+  int32 GroupID = 2;
+  string Content = 3;
+  int32 MessageReplyID = 4;
+}
+message SendMessageResponse {
+  int32 MessageID = 1;
+  google.protobuf.Timestamp CreatedAt = 2;
+}
+message GetMessagesRequest {
+  int32 UserID=1;
+  int32 GroupID = 2;
+}
+message GetMessagesResponse {
+  repeated Message Messages = 1;
+}
+message DeleteMessageRequest {
+  int32 UserID = 1;
+  int32 MessageID = 2;
+}
+message DeleteMessageResponse {
+  string Status = 1;
+}
+message GetLatestMessagesRequest {
+  int32 UserID = 1;
+  int32 GroupID = 2;
+}
+message GetLatestMessagesResponse {
+  Message Message = 1;
 }

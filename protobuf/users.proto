@@ -16,6 +16,7 @@ message User{
   string Bio=5;
   google.protobuf.Timestamp CreatedAt=6;
 }
+message Con
 message RegisterRequest{
   string Email = 1;
   string Password = 2;

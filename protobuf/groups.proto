@@ -4,8 +4,20 @@ service GroupService{
   rpc ChangeNameGroup(ChangeNameRequest) returns (ChangeNameResponse){}
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse){}
   rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse){}
+  rpc GetGroupInfo(GetGroupInfoRequest) returns (Group){}
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse){}
+  rpc KickMember(KickMemberRequest) returns (KickMemberResponse){}
+  rpc ChangeAdmin(ChangeAdminRequest) returns (ChangeAdminResponse){}
+  rpc LeaveGroup(LeaveGroupRequest) returns (LeaveGroupResponse){}
+  rpc GetListMember(GetListMemberRequest) returns (GetListMemberReponse){}
+  rpc GetListUserGroup(GetListUserGroupRequest) returns (GetListUserGroupReponse){}
 }
-message group{
+message Member{
+  int32 UserID = 1;
+  string Name = 2;
+  int32 RoleID = 3;
+}
+message Group{
   int32 ID = 1;
   string Name = 2;
   int32 MemberCount = 3;
@@ -20,7 +32,9 @@ message ChangeNameResponse{
   string Name=2;
 }
 message CreateGroupRequest{
-  string Name=1;
+  int32 UserID=1;
+  string Name=2;
+  repeated int32 MemberIDs=3;
 }
 message CreateGroupResponse{
   string Status=1;
@@ -30,5 +44,51 @@ message DeleteGroupRequest{
   int32 GroupID=2;
 }
 message DeleteGroupResponse{
-  string status=1;
+  string Status=1;
+}
+message GetGroupInfoRequest{
+  int32 GroupID=1;
+}
+message AddMemberRequest{
+  int32 UserID=1;
+  int32 GroupID=2;
+  repeated int32 MemberIDs=3;
+}
+message AddMemberResponse{
+  string Status=1;
+}
+message KickMemberRequest{
+  int32 UserID=1;
+  int32 GroupID=2;
+  int32 MemberID=3;
+}
+message KickMemberResponse{
+  string Status=1;
+}
+message ChangeAdminRequest{
+  int32 UserID=1;
+  int32 GroupID=2;
+  int32 NewAdminID=3;
+}
+message ChangeAdminResponse{
+  string Status=1;
+}
+message GetListMemberRequest {
+ int32 GroupID = 1;
+}
+message GetListMemberReponse {
+ repeated Member Members = 1;
+}
+message LeaveGroupRequest {
+ int32 UserID = 1;
+ int32 GroupID = 2;
+}
+message LeaveGroupResponse {
+ string Status = 1;
+}
+message GetListUserGroupRequest {
+ int32 UserID = 1;
+}
+message GetListUserGroupReponse {
+ repeated Group Groups = 1;
 }

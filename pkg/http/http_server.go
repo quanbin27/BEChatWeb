@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
@@ -13,6 +14,9 @@ type HttpServer struct {
 func NewHttpServer(addr string) *HttpServer {
 	return &HttpServer{addr: addr}
 }
+
+var Validate = validator.New()
+
 func (s *HttpServer) Run() error {
 	e := echo.New()
 	conn := NewGRPCClient(":9000")
