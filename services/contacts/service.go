@@ -84,36 +84,88 @@ func (s *ContactService) AcceptContact(ctx context.Context, req *contacts.Accept
 
 }
 
-func (s *ContactService) GetContacts(ctx context.Context, req *contacts.GetContactsRequest) ([]*contacts.Contact, error) {
-	ListContacts, err := s.store.GetContacts(req.UserId)
-	if err != nil {
-		return nil, errors.New("failed to fetch contacts: " + err.Error())
-	}
-	result := make([]*contacts.Contact, len(ListContacts))
-	for i, c := range ListContacts {
-		result[i] = &contacts.Contact{
-			UserId:        c.UserID,
-			ContactUserId: c.ContactUserID,
-			Status:        c.Status,
-		}
-	}
-	return result, nil
-}
-func (s *ContactService) GetPendingSentContacts(ctx context.Context, userID int32) ([]types.Contact, error) {
-	ListContacts, err := s.store.GetPendingSentContacts(userID)
+func (s *ContactService) GetContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error) {
+	// Lấy danh sách userIDs đã kết bạn từ bảng Contact
+	friendIDs, err := s.store.GetFriendIDs(userID)
 	if err != nil {
 		return nil, err
 	}
+	users, err := s.userStore.GetUsersByIDs(friendIDs)
+	if err != nil {
+		return nil, err
+	}
+	var ListContacts []*contacts.Contact
+	for _, user := range users {
+		ListContacts = append(ListContacts, &contacts.Contact{
+			UserId:   user.ID,
+			Username: user.Name,
+			Email:    user.Email,
+		})
+	}
 	return ListContacts, nil
+}
+func (s *ContactService) GetPendingSentContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error) {
+	// Lấy danh sách các liên hệ gửi đi (pending)
+	sentContacts, err := s.store.GetPendingSentContacts(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Lấy danh sách user_id của các liên hệ đó
+	var contactUserIDs []int32
+	for _, contact := range sentContacts {
+		contactUserIDs = append(contactUserIDs, contact.ContactUserID)
+	}
+
+	// Truy xuất thông tin chi tiết của các user_id từ bảng User
+	users, err := s.userStore.GetUsersByIDs(contactUserIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Chuyển đổi thành danh sách contacts.Contact
+	var pendingContacts []*contacts.Contact
+	for _, user := range users {
+		pendingContacts = append(pendingContacts, &contacts.Contact{
+			UserId:   user.ID,
+			Username: user.Name,
+			Email:    user.Email,
+		})
+	}
+
+	return pendingContacts, nil
 }
 
-func (s *ContactService) GetPendingReceivedContacts(ctx context.Context, userID int32) ([]types.Contact, error) {
-	ListContacts, err := s.store.GetPendingReceivedContacts(userID)
+func (s *ContactService) GetPendingReceivedContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error) {
+	receivedContacts, err := s.store.GetPendingReceivedContacts(userID)
 	if err != nil {
 		return nil, err
 	}
-	return ListContacts, nil
+
+	var contactUserIDs []int32
+	for _, contact := range receivedContacts {
+		contactUserIDs = append(contactUserIDs, contact.UserID)
+	}
+
+	// Truy xuất thông tin chi tiết của các user_id từ bảng User
+	users, err := s.userStore.GetUsersByIDs(contactUserIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Chuyển đổi thành danh sách contacts.Contact
+	var pendingContacts []*contacts.Contact
+	for _, user := range users {
+		pendingContacts = append(pendingContacts, &contacts.Contact{
+			UserId:   user.ID,
+			Username: user.Name,
+			Email:    user.Email,
+		})
+	}
+
+	return pendingContacts, nil
 }
+
 func (s *ContactService) RejectContact(ctx context.Context, userID, contactUserID int32) error {
 	err := s.store.RejectContact(userID, contactUserID)
 	if err != nil {

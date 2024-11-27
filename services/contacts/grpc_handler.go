@@ -46,44 +46,50 @@ func (h *ContactsGrpcHandler) AcceptContact(ctx context.Context, req *contacts.A
 }
 
 func (h *ContactsGrpcHandler) GetContacts(ctx context.Context, req *contacts.GetContactsRequest) (*contacts.GetContactsResponse, error) {
-	ListContacts, err := h.service.GetContacts(ctx, req)
+	// Lấy danh sách các liên hệ đã kết bạn
+	ListContacts, err := h.service.GetContacts(ctx, req.UserId)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	return &contacts.GetContactsResponse{Contacts: ListContacts}, nil
-}
-func (h *ContactsGrpcHandler) GetPendingSentContacts(ctx context.Context, req *contacts.GetPendingSentContactsRequest) (*contacts.GetPendingSentContactsResponse, error) {
-	contactsList, err := h.service.GetPendingSentContacts(ctx, req.UserId)
-	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, "Failed to get contacts: "+err.Error())
 	}
 
-	// Chuyển đổi slice của types.Contact thành slice của gRPC contacts.Contact
+	// Trả về danh sách trong GetContactsResponse
+	return &contacts.GetContactsResponse{
+		Contacts: ListContacts,
+	}, nil
+}
+func (h *ContactsGrpcHandler) GetPendingSentContacts(ctx context.Context, req *contacts.GetPendingSentContactsRequest) (*contacts.GetPendingSentContactsResponse, error) {
+	// Gọi service để lấy danh sách chi tiết thông tin người dùng đã gửi yêu cầu kết bạn
+	contactsList, err := h.service.GetPendingSentContacts(ctx, req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to fetch pending sent contacts: %v", err)
+	}
+
+	// Chuyển đổi slice của service response thành slice của gRPC response
 	var grpcContacts []*contacts.Contact
 	for _, contact := range contactsList {
 		grpcContacts = append(grpcContacts, &contacts.Contact{
-			UserId:        contact.UserID,
-			ContactUserId: contact.ContactUserID,
-			Status:        contact.Status,
+			UserId:   contact.UserId,
+			Username: contact.Username,
+			Email:    contact.Email,
 		})
 	}
 
 	return &contacts.GetPendingSentContactsResponse{Contacts: grpcContacts}, nil
 }
-
 func (h *ContactsGrpcHandler) GetPendingReceivedContacts(ctx context.Context, req *contacts.GetPendingReceivedContactsRequest) (*contacts.GetPendingReceivedContactsResponse, error) {
+	// Gọi service để lấy danh sách chi tiết thông tin người dùng đã nhận yêu cầu kết bạn
 	contactsList, err := h.service.GetPendingReceivedContacts(ctx, req.UserId)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "Failed to fetch pending received contacts: %v", err)
 	}
 
-	// Chuyển đổi slice của types.Contact thành slice của gRPC contacts.Contact
+	// Chuyển đổi slice của service response thành slice của gRPC response
 	var grpcContacts []*contacts.Contact
 	for _, contact := range contactsList {
 		grpcContacts = append(grpcContacts, &contacts.Contact{
-			UserId:        contact.UserID,
-			ContactUserId: contact.ContactUserID,
-			Status:        contact.Status,
+			UserId:   contact.UserId,
+			Username: contact.Username,
+			Email:    contact.Email,
 		})
 	}
 

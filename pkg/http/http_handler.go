@@ -244,7 +244,7 @@ func (h *HttpHandler) GetContactsHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get contacts: " + err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{"contacts": res.Contacts})
+	return c.JSON(http.StatusOK, res)
 }
 
 func (h *HttpHandler) GetLatestMessagesHandler(c echo.Context) error {

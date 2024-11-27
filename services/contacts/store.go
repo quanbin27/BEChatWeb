@@ -63,6 +63,23 @@ func (s *ContactStore) GetContacts(userID int32) ([]types.Contact, error) {
 		Find(&contacts).Error
 	return contacts, err
 }
+func (s *ContactStore) GetFriendIDs(userID int32) ([]int32, error) {
+	var friendIDs []int32
+	query := `
+		SELECT CASE 
+			WHEN user_id = ? THEN contact_user_id 
+			ELSE user_id 
+		END AS friend_id
+		FROM contacts
+		WHERE (user_id = ? OR contact_user_id = ?) AND status = 'ACCEPTED'
+	`
+	err := s.db.Raw(query, userID, userID, userID).Scan(&friendIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return friendIDs, nil
+}
+
 func (s *ContactStore) GetPendingSentContacts(userID int32) ([]types.Contact, error) {
 	var contacts []types.Contact
 	err := s.db.Where("user_id = ? AND status = ?", userID, "PENDING").
