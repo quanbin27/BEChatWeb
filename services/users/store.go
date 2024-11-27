@@ -49,6 +49,7 @@ func (s *UserStore) GetUserByID(id int32) (*types.User, error) {
 	}
 	return &user, nil
 }
+
 func (UserStore *UserStore) CreateUser(user *types.User) error {
 	result := UserStore.db.Create(&user)
 	if result.Error != nil {
