@@ -79,3 +79,10 @@ func (s *UserService) GetUserByID(ctx context.Context, id int32) (*types.User, e
 	}
 	return user, nil
 }
+func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
+	user, err := s.userStore.GetUserByEmail(email)
+	if err != nil {
+		return nil, errors.New("User not found")
+	}
+	return user, nil
+}

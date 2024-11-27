@@ -7,6 +7,8 @@ service UserService{
   rpc ChangeInfo(ChangeInfoRequest) returns (ChangeInfoResponse){}
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse){}
   rpc GetUserInfo(GetUserInfoRequest) returns (User){}
+  rpc GetUserInfoByEmail(GetUserInfoByEmailRequest) returns (User){}
+
 }
 message User{
   int32 ID = 1;
@@ -16,7 +18,6 @@ message User{
   string Bio=5;
   google.protobuf.Timestamp CreatedAt=6;
 }
-message Con
 message RegisterRequest{
   string Email = 1;
   string Password = 2;
@@ -55,5 +56,8 @@ message ChangePasswordResponse{
 }
 message GetUserInfoRequest{
   int32 ID=1;
+}
+message GetUserInfoByEmailRequest{
+  string Email=1;
 }
 

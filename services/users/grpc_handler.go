@@ -77,3 +77,17 @@ func (h *UsersGrpcHandler) GetUserInfo(ctx context.Context, req *users.GetUserIn
 	}
 	return res, nil
 }
+func (h *UsersGrpcHandler) GetUserInfoByEmail(ctx context.Context, req *users.GetUserInfoByEmailRequest) (*users.User, error) {
+	dbUser, err := h.userService.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, err
+	}
+	res := &users.User{
+		ID:        dbUser.ID,
+		Name:      dbUser.Name,
+		Email:     dbUser.Email,
+		Bio:       dbUser.Bio,
+		CreatedAt: timestamppb.New(dbUser.CreatedAt),
+	}
+	return res, nil
+}

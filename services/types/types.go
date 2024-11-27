@@ -55,6 +55,7 @@ type UserService interface {
 	UpdateUser(ctx context.Context, update *users.ChangeInfoRequest) error
 	UpdatePassword(ctx context.Context, update *users.ChangePasswordRequest) error
 	GetUserByID(ctx context.Context, id int32) (*User, error)
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
 }
 type GroupService interface {
 	CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) error
