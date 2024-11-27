@@ -32,7 +32,7 @@ func (s *gRPCServer) Run() error {
 	contactStore := contacts.NewContactStore(s.db)
 	groupService := groups.NewGroupService(groupStore)
 	messageStore := messages.NewStore(s.db)
-	contactService := contacts.NewContactService(contactStore)
+	contactService := contacts.NewContactService(contactStore, groupStore, userStore)
 	messageService := messages.NewMessageService(messageStore, groupStore)
 	users.NewGrpcUsersHandler(grpcServer, userService)
 	contacts.NewGrpcContactsHandler(grpcServer, contactService)

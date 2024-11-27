@@ -16,6 +16,7 @@ type UserStore interface {
 	CreateUser(user *User) error
 	UpdateInfo(userID int32, updatedData map[string]interface{}) error
 	UpdatePassword(userID int32, password string) error
+	GetNameByID(id int32) (string, error)
 }
 type GroupStore interface {
 	ChangeNameGroup(id int32, name string) error

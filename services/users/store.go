@@ -1,6 +1,8 @@
 package users
 
 import (
+	"errors"
+	"fmt"
 	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 	"gorm.io/gorm"
 )
@@ -19,6 +21,17 @@ func (s *UserStore) GetUserByEmail(email string) (*types.User, error) {
 		return nil, result.Error
 	}
 	return &user, nil
+}
+func (s *UserStore) GetNameByID(id int32) (string, error) {
+	var user types.User
+	result := s.db.Where("id = ?", id).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return "", fmt.Errorf("no user found with ID %d", id)
+		}
+		return "", result.Error
+	}
+	return user.Name, nil
 }
 func (s *UserStore) GetUserByID(id int32) (*types.User, error) {
 	var user types.User
