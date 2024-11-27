@@ -33,6 +33,14 @@ func (s *UserStore) GetNameByID(id int32) (string, error) {
 	}
 	return user.Name, nil
 }
+func (s *UserStore) GetUsersByIDs(userIDs []int32) ([]types.User, error) {
+	var users []types.User
+	err := s.db.Where("id IN ?", userIDs).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
 func (s *UserStore) GetUserByID(id int32) (*types.User, error) {
 	var user types.User
 	result := s.db.Unscoped().Where("id = ?", id).First(&user)

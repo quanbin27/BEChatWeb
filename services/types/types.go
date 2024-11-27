@@ -17,6 +17,7 @@ type UserStore interface {
 	UpdateInfo(userID int32, updatedData map[string]interface{}) error
 	UpdatePassword(userID int32, password string) error
 	GetNameByID(id int32) (string, error)
+	GetUsersByIDs(userIDs []int32) ([]User, error)
 }
 type GroupStore interface {
 	ChangeNameGroup(id int32, name string) error
@@ -46,6 +47,7 @@ type ContactStore interface {
 	RejectContact(userID, contactUserID int32) error
 	GetPendingReceivedContacts(userID int32) ([]Contact, error)
 	GetPendingSentContacts(userID int32) ([]Contact, error)
+	GetFriendIDs(userID int32) ([]int32, error)
 }
 type UserService interface {
 	CreateUser(ctx context.Context, user *users.RegisterRequest) error
@@ -76,9 +78,9 @@ type ContactService interface {
 	AddContact(ctx context.Context, req *contacts.AddContactRequest) error
 	RemoveContact(ctx context.Context, req *contacts.RemoveContactRequest) error
 	AcceptContact(ctx context.Context, req *contacts.AcceptContactRequest) error
-	GetContacts(ctx context.Context, req *contacts.GetContactsRequest) ([]*contacts.Contact, error)
-	GetPendingSentContacts(ctx context.Context, userID int32) ([]Contact, error)
-	GetPendingReceivedContacts(ctx context.Context, userID int32) ([]Contact, error)
+	GetContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error)
+	GetPendingSentContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error)
+	GetPendingReceivedContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error)
 	RejectContact(ctx context.Context, userID, contactUserID int32) error
 }
 
@@ -90,6 +92,7 @@ type User struct {
 	Email     string         `json:"email"`
 	Password  string         `json:"password"`
 	Bio       string         `json:"bio"`
+	Avatar    string         `gorm:"type:longtext"`
 	CreatedAt time.Time      `gorm:"autoCreateTime" json:"created_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
