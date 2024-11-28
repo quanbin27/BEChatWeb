@@ -8,6 +8,7 @@ service ContactService {
   rpc GetPendingSentContacts(GetPendingSentContactsRequest) returns (GetPendingSentContactsResponse);
   rpc GetPendingReceivedContacts(GetPendingReceivedContactsRequest) returns (GetPendingReceivedContactsResponse);
   rpc RejectContact(RejectContactRequest) returns (RejectContactResponse);
+  rpc GetContactsNotInGroup(GetContactsNotInGroupRequest) returns (GetContactsNotInGroupResponse);
 }
 
 message Contact {
@@ -75,3 +76,11 @@ message RejectContactRequest {
 message RejectContactResponse {
   string status = 1;
 }
+message GetContactsNotInGroupRequest{
+  int32 user_id=1;
+  int32 group_id=2;
+}
+message GetContactsNotInGroupResponse{
+  repeated Contact contacts = 1;
+}
+

@@ -48,6 +48,7 @@ type ContactStore interface {
 	GetPendingReceivedContacts(userID int32) ([]Contact, error)
 	GetPendingSentContacts(userID int32) ([]Contact, error)
 	GetFriendIDs(userID int32) ([]int32, error)
+	GetContactsNotInGroup(userID int32, groupID int32) ([]Contact, error)
 }
 type UserService interface {
 	CreateUser(ctx context.Context, user *users.RegisterRequest) error
@@ -83,6 +84,7 @@ type ContactService interface {
 	GetPendingSentContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error)
 	GetPendingReceivedContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error)
 	RejectContact(ctx context.Context, userID, contactUserID int32) error
+	GetContactsNotInGroup(ctx context.Context, userID int32, groupID int32) ([]*contacts.Contact, error)
 }
 
 // ------ USER ------

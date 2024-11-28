@@ -26,6 +26,7 @@ const (
 	ContactService_GetPendingSentContacts_FullMethodName     = "/ContactService/GetPendingSentContacts"
 	ContactService_GetPendingReceivedContacts_FullMethodName = "/ContactService/GetPendingReceivedContacts"
 	ContactService_RejectContact_FullMethodName              = "/ContactService/RejectContact"
+	ContactService_GetContactsNotInGroup_FullMethodName      = "/ContactService/GetContactsNotInGroup"
 )
 
 // ContactServiceClient is the client API for ContactService service.
@@ -39,6 +40,7 @@ type ContactServiceClient interface {
 	GetPendingSentContacts(ctx context.Context, in *GetPendingSentContactsRequest, opts ...grpc.CallOption) (*GetPendingSentContactsResponse, error)
 	GetPendingReceivedContacts(ctx context.Context, in *GetPendingReceivedContactsRequest, opts ...grpc.CallOption) (*GetPendingReceivedContactsResponse, error)
 	RejectContact(ctx context.Context, in *RejectContactRequest, opts ...grpc.CallOption) (*RejectContactResponse, error)
+	GetContactsNotInGroup(ctx context.Context, in *GetContactsNotInGroupRequest, opts ...grpc.CallOption) (*GetContactsNotInGroupResponse, error)
 }
 
 type contactServiceClient struct {
@@ -119,6 +121,16 @@ func (c *contactServiceClient) RejectContact(ctx context.Context, in *RejectCont
 	return out, nil
 }
 
+func (c *contactServiceClient) GetContactsNotInGroup(ctx context.Context, in *GetContactsNotInGroupRequest, opts ...grpc.CallOption) (*GetContactsNotInGroupResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetContactsNotInGroupResponse)
+	err := c.cc.Invoke(ctx, ContactService_GetContactsNotInGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContactServiceServer is the server API for ContactService service.
 // All implementations must embed UnimplementedContactServiceServer
 // for forward compatibility.
@@ -130,6 +142,7 @@ type ContactServiceServer interface {
 	GetPendingSentContacts(context.Context, *GetPendingSentContactsRequest) (*GetPendingSentContactsResponse, error)
 	GetPendingReceivedContacts(context.Context, *GetPendingReceivedContactsRequest) (*GetPendingReceivedContactsResponse, error)
 	RejectContact(context.Context, *RejectContactRequest) (*RejectContactResponse, error)
+	GetContactsNotInGroup(context.Context, *GetContactsNotInGroupRequest) (*GetContactsNotInGroupResponse, error)
 	mustEmbedUnimplementedContactServiceServer()
 }
 
@@ -160,6 +173,9 @@ func (UnimplementedContactServiceServer) GetPendingReceivedContacts(context.Cont
 }
 func (UnimplementedContactServiceServer) RejectContact(context.Context, *RejectContactRequest) (*RejectContactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RejectContact not implemented")
+}
+func (UnimplementedContactServiceServer) GetContactsNotInGroup(context.Context, *GetContactsNotInGroupRequest) (*GetContactsNotInGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContactsNotInGroup not implemented")
 }
 func (UnimplementedContactServiceServer) mustEmbedUnimplementedContactServiceServer() {}
 func (UnimplementedContactServiceServer) testEmbeddedByValue()                        {}
@@ -308,6 +324,24 @@ func _ContactService_RejectContact_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContactService_GetContactsNotInGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetContactsNotInGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactServiceServer).GetContactsNotInGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactService_GetContactsNotInGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactServiceServer).GetContactsNotInGroup(ctx, req.(*GetContactsNotInGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContactService_ServiceDesc is the grpc.ServiceDesc for ContactService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -342,6 +376,10 @@ var ContactService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RejectContact",
 			Handler:    _ContactService_RejectContact_Handler,
+		},
+		{
+			MethodName: "GetContactsNotInGroup",
+			Handler:    _ContactService_GetContactsNotInGroup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -83,6 +83,45 @@ func (s *ContactService) AcceptContact(ctx context.Context, req *contacts.Accept
 	return nil
 
 }
+func (s *ContactService) GetContactsNotInGroup(ctx context.Context, userID int32, groupID int32) ([]*contacts.Contact, error) {
+	// Lấy danh sách các contact không thuộc nhóm
+	contactsList, err := s.store.GetContactsNotInGroup(userID, groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Tạo một slice chứa thông tin các contact
+	var ListContacts []*contacts.Contact
+	for _, contact := range contactsList {
+		// Xác định contactUserID là người bạn cần lấy thông tin
+		var targetUserID int32
+		if contact.UserID == userID {
+			targetUserID = contact.ContactUserID
+		} else {
+			targetUserID = contact.UserID
+		}
+
+		// Đảm bảo không thêm chính bản thân userID
+		if targetUserID == userID {
+			continue
+		}
+
+		// Lấy thông tin user từ userStore
+		user, err := s.userStore.GetUserByID(targetUserID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Chuyển các thông tin từ contact và user thành message gRPC
+		ListContacts = append(ListContacts, &contacts.Contact{
+			UserId:   targetUserID,
+			Username: user.Name,
+			Email:    user.Email,
+		})
+	}
+
+	return ListContacts, nil
+}
 
 func (s *ContactService) GetContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error) {
 	// Lấy danh sách userIDs đã kết bạn từ bảng Contact

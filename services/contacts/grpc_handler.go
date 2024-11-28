@@ -95,6 +95,23 @@ func (h *ContactsGrpcHandler) GetPendingReceivedContacts(ctx context.Context, re
 
 	return &contacts.GetPendingReceivedContactsResponse{Contacts: grpcContacts}, nil
 }
+func (h *ContactsGrpcHandler) GetContactsNotInGroup(ctx context.Context, req *contacts.GetContactsNotInGroupRequest) (*contacts.GetContactsNotInGroupResponse, error) {
+	// Kiểm tra tham số đầu vào
+	if req.UserId <= 0 || req.GroupId <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid user_id or group_id")
+	}
+
+	// Gọi service để lấy danh sách contacts không thuộc nhóm
+	ListContacts, err := h.service.GetContactsNotInGroup(ctx, req.UserId, req.GroupId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get contacts not in group: %v", err)
+	}
+
+	// Trả về response gRPC
+	return &contacts.GetContactsNotInGroupResponse{
+		Contacts: ListContacts,
+	}, nil
+}
 
 func (h *ContactsGrpcHandler) RejectContact(ctx context.Context, req *contacts.RejectContactRequest) (*contacts.RejectContactResponse, error) {
 	err := h.service.RejectContact(ctx, req.UserId, req.ContactUserId)
