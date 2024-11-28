@@ -1,0 +1,50 @@
+#add-group-btn{
+    padding: 5px;
+    border-radius: 5px;
+    background-color: rgba(78, 172, 109, 0.1);
+}
+#add-group-btn:hover{
+    background-color: #4eac6d !important;
+}
+.add-more-contact:hover{
+    background-color: #cbcbcb;
+    cursor: pointer;
+}
+.btn:hover{
+    cursor: pointer;
+}
+
+.contact:hover{
+    cursor: pointer;
+    background-color: #d5d5d5;
+}
+.contact{
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    gap: 10px;
+    margin-top: 10px;;
+    justify-content: space-between;
+    margin-right: 10px;
+    position: relative;
+}
+.contact .btn-delete:hover{
+    cursor: pointer;
+    background-color: gray;
+
+}
+.contact .btn-delete{
+    display: none;
+    position: absolute;
+    right: -5px;
+    bottom: -25px;
+    border: 1px solid gray;
+    padding: 5px 26px;
+    color: black;
+}
+.custom-hidden{
+    display: none;
+}
+.custom-show{
+    display: block;
+}

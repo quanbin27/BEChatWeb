@@ -420,13 +420,21 @@
                             <ul class="list-unstyled chat-list chat-user-list" id="favourite-users">
                             </ul>
                         </div>
+
+                        <h5 class="mb-3 px-4 mt-4 font-size-11 text-muted text-uppercase">Groups</h5>
+
+                        <div class="chat-message-list">
+
+                            <ul class="list-unstyled chat-list chat-user-list" id="favourite-groups">
+                            </ul>
+                        </div>
                         <!-- End chat-message-list -->
                     </div>
                 </div>
                 <!-- Start chats content -->
 
                 <!-- Start add group Modal  Form dùng để thêm nhóm -->
-                <div class="modal fade" id="addgroup-exampleModal" tabindex="-1" role="dialog" aria-labelledby="addgroup-exampleModalLabel" aria-hidden="true">
+                <div class="modal fade" id="addgroup-exampleModal" tabindex="-1" role="dialog" aria-labelledby="addgroup-exampleModalLabel" >
                     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                         <div class="modal-content modal-header-colored shadow-lg border-0">
                             <div class="modal-header">
@@ -500,8 +508,19 @@
                                 <h4 class="mb-4">Contacts</h4>
                             </div>
                             <div class="flex-shrink-0">
-                                <div data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="bottom" title="Add Contact">
-
+                                <div data-bs-toggle="tooltip"  data-bs-trigger="hover" data-bs-placement="bottom" title="Pending Contacts">
+                                    <button class = 'pending-contact' id = 'btn-pending-contacts'>
+                                        <svg width="20px" height="20px" viewBox="0 0 17 17" xmlns="http://www.w3.org/2000/svg">
+                                            <g id="add-group-16px" transform="translate(0.5 0.5)">
+                                                <path id="Subtração_4" data-name="Subtração 4" d="M-14,16h-4.5A1.5,1.5,0,0,1-20,14.5,3.5,3.5,0,0,1-16.5,11H-14a3,3,0,0,1-3-3h-3.5A1.5,1.5,0,0,1-22,6.5,2.5,2.5,0,0,1-19.5,4H-18a2,2,0,0,1-2-2,2,2,0,0,1,2-2,2,2,0,0,1,2,2,2,2,0,0,1-2,2h1.5a2.508,2.508,0,0,1,2.027,1.048A2.909,2.909,0,0,1-14,5a2.924,2.924,0,0,1,.473.048A2.506,2.506,0,0,1-11.5,4H-10a2,2,0,0,1-2-2,2,2,0,0,1,2-2A2,2,0,0,1-8,2a2,2,0,0,1-2,2h1.5A2.5,2.5,0,0,1-6,6.5,1.5,1.5,0,0,1-7.5,8H-11v.043l0,.057h-1c0-.03,0-.061,0-.1a2,2,0,0,0-2-2,2,2,0,0,0-2,2,2,2,0,0,0,2,2v2h-2.5A2.5,2.5,0,0,0-19,14.5a.5.5,0,0,0,.5.5H-14v1Zm2.5-11a1.492,1.492,0,0,0-1.02.406A3,3,0,0,1-11.184,7H-7.5A.5.5,0,0,0-7,6.5,1.5,1.5,0,0,0-8.5,5Zm-8,0A1.5,1.5,0,0,0-21,6.5a.5.5,0,0,0,.5.5h3.685A2.993,2.993,0,0,1-15.48,5.406,1.492,1.492,0,0,0-16.5,5ZM-10,1a1,1,0,0,0-1,1,1,1,0,0,0,1,1A1,1,0,0,0-9,2,1,1,0,0,0-10,1Zm-8,0a1,1,0,0,0-1,1,1,1,0,0,0,1,1,1,1,0,0,0,1-1A1,1,0,0,0-18,1Z" transform="translate(22)" stroke="rgba(0,0,0,0)" stroke-miterlimit="10" stroke-width="1"></path>
+                                                <path id="Caminho_179" data-name="Caminho 179" d="M38,12.5a.5.5,0,0,1-.5.5H35v2.5a.5.5,0,0,1-1,0V13H31.5a.5.5,0,0,1,0-1H34V9.5a.5.5,0,0,1,1,0V12h2.5A.5.5,0,0,1,38,12.5Z" transform="translate(-22)"></path>
+                                                <path id="Caminho_258" data-name="Caminho 258" d="M976.148,357.487h2.005" transform="translate(-970.157 -345.987)" fill="none" stroke="#000000" stroke-linecap="round" stroke-width="1"></path>
+                                                <path id="Caminho_259" data-name="Caminho 259" d="M976.148,357.487h2.005" transform="translate(-970.157 -341.987)" fill="none" stroke="#000000" stroke-linecap="round" stroke-width="1"></path>
+                                                <path id="Caminho_260" data-name="Caminho 260" d="M976.148,357.487h0" transform="translate(-968.151 -346.987)" fill="none" stroke="#000000" stroke-linecap="round" stroke-width="1"></path>
+                                                <path id="Caminho_261" data-name="Caminho 261" d="M976.148,357.487h0" transform="translate(-965.648 -349.487)" fill="none" stroke="#000000" stroke-linecap="round" stroke-width="1"></path>
+                                            </g>
+                                        </svg>
+                                    </button>
                                     <!-- Button trigger modal -->
                                     <button type="button" class="btn btn-soft-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addContact-exampleModal">
                                         <i class="bx bx-plus"></i>
@@ -1373,39 +1392,9 @@
                                 <input type="email" class="form-control" id="addcontactemail-input" placeholder="Enter Email">
                             </div>
                         </form>
-                        <div class="find-user">
+                        <div class="contact-info">
                             <p>Kết quả tìm kiếm</p>
-<!--                            <div class="user" style="display: flex; justify-content: space-between; align-items: center;">-->
-<!--                                <div style="display: flex; gap:20px;">-->
-<!--                                    <img src="assets/images/users/avatar-2.jpg" alt="" style="width: 35px; height: 35px; border-radius: 50%;">-->
-<!--                                    <div>-->
-<!--                                        <p style="margin: 0;">Tên</p>-->
-<!--                                        <p style="margin: 0;">Email</p>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                                <div>-->
-<!--                                        <span class="btn btn-add-contact">-->
-<!--                                            <svg fill="#000000" height="20px" width="20px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"-->
-<!--                                                 viewBox="0 0 78.509 78.509" xml:space="preserve">-->
-<!--                                                <g>-->
-<!--                                                    <path d="M68.305,51.149h-3.032v-3.031v-6h-6h-5.281c-2.281-2.832-4.785-5.04-7.03-6.974c3.829-3.723,6.22-8.918,6.22-14.668-->
-<!--                                                        C53.182,9.186,43.996,0,32.706,0S12.23,9.186,12.23,20.476c0,5.75,2.39,10.945,6.219,14.668-->
-<!--                                                        C12.318,40.425,4.205,47.729,4.205,64.26v3h33.708v2.218h6h3.033v3.031v6h6h6.326h6v-6v-3.031h3.032h6v-6V57.15v-6L68.305,51.149-->
-<!--                                                        L68.305,51.149z M18.23,20.476C18.23,12.494,24.724,6,32.706,6c7.981,0,14.476,6.494,14.476,14.476-->
-<!--                                                        c0,7.449-5.656,13.597-12.897,14.386c-0.072,0.007-0.143,0.016-0.215,0.021c-0.347,0.033-0.698,0.046-1.051,0.054-->
-<!--                                                        c-0.097,0.002-0.192,0.01-0.289,0.011c-0.153-0.001-0.303-0.012-0.455-0.017c-0.292-0.009-0.584-0.018-0.871-0.044-->
-<!--                                                        c-0.108-0.008-0.215-0.021-0.322-0.031C23.862,34.044,18.23,27.908,18.23,20.476z M22.736,39.369-->
-<!--                                                        c0.158-0.137,0.315-0.271,0.472-0.406c2.29,0.981,4.736,1.607,7.242,1.858c0.176,0.02,0.355,0.028,0.532,0.044-->
-<!--                                                        c0.469,0.036,0.939,0.062,1.411,0.071c0.105,0.001,0.207,0.016,0.312,0.016c0.078,0,0.154-0.011,0.231-0.012-->
-<!--                                                        c0.523-0.009,1.045-0.037,1.566-0.079c0.143-0.013,0.287-0.021,0.428-0.036c2.505-0.246,4.965-0.874,7.271-1.862-->
-<!--                                                        c0.155,0.135,0.313,0.27,0.472,0.406c1.415,1.217,2.872,2.48,4.272,3.887v4.862v3.031h-3.033h-6v6v4.11h-27.6-->
-<!--                                                        C11.187,49.303,17.297,44.047,22.736,39.369z M68.305,63.478h-9.032v9.031h-6.326v-9.031h-9.033V57.15h9.033v-9.031h6.326v9.031-->
-<!--                                                        h9.032V63.478z"/>-->
-<!--                                                </g>-->
-<!--                                            </svg>-->
-<!--                                        </span>-->
-<!--                                </div>-->
-<!--                            </div>-->
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -2392,6 +2381,55 @@
                             Add
                             <!-- <i class="bx bxs-send align-middle"></i> -->
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!--        ================================================-->
+
+        <div class="modal fade contactModal"  id = 'pending-contact-modal'>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content modal-header-colored shadow-lg border-0">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-white font-size-16">Contacts</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="d-flex align-items-center px-1">
+                            <div class="flex-grow-1">
+                                <h4 class=" font-size-11 text-muted text-uppercase">Contacts</h4>
+                            </div>
+                        </div>
+                        <div class="contact-modal-list mx-n4 px-1" data-simplebar style="max-height: 200px;">
+                            <div class="mt-3">
+                                <div class="contact-list-title">
+                                    Đang chờ
+                                </div>
+
+                                <ul class="list-unstyled pending-contact-list">
+                                    <li>
+                                        <div>
+                                            <h5 class="font-size-14 m-0">Albert Rodarte</h5>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <div>
+                                            <h5 class="font-size-14 m-0">Allison Etter</h5>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- end contact list S -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link" data-bs-dismiss="modal">Cancel</button>
+<!--                        <button type="button" class="btn btn-primary"><i class="bx bxs-send align-middle"></i></button>-->
                     </div>
                 </div>
             </div>

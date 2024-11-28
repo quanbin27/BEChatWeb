@@ -1,46 +1,51 @@
 class Store {
     constructor() {
-        this.state = {
-            selectedContact: null,
-        };
-        this.listeners = [];
     }
 
-    // Đăng ký lắng nghe thay đổi
-    subscribe(listener) {
-        this.listeners.push(listener);
+    setChat(chat){
+        this.chat = chat;
     }
-
-    // Cập nhật trạng thái và thông báo cho listener
-    setState(newState) {
-        this.state = { ...this.state, ...newState };
-        this.listeners.forEach(listener => listener(this.state));
+    getContacts(){
+        chat.getContacts();
     }
-
-    // Trả về trạng thái hiện tại
-    getState() {
-        return this.state;
+    setContact(contact){
+        this.contact =contact;
+    }
+    getContact(){
+        return this.contact;
+    }
+    setGroup(group){
+        this.group = group;
+    }
+    getRroup(){
+        return this.group;
     }
 }
-const store = new Store(); // Khởi tạo trạng thái chung
+
 
 class Chat{
-    constructor(){
+    constructor(store){
+        this.store = store;
+
         this.userConversation = document.querySelector('#users-conversation');
         this.btnSend = document.querySelector('.links-list-item button[type="submit"]');
         this.chatinput = document.querySelector('.chat-input');
-        this.favouriteUsers= document.querySelector('#favourite-users')
+
+        this.favouriteUsers= document.querySelector('#favourite-users');
+        this.favouriteGroups = document.querySelector('#favourite-groups');
+
         this.avatar = document.querySelector('.avatar-sm');
         this.profileDetail = document.querySelector('.user-profile-sidebar');
         this.profileAvatar = this.profileDetail.querySelector('.profile-img');
-        this.userName = document.querySelector('.user-profile-show')
+        this.userName = document.querySelector('.user-profile-show');
+
         this.current_conversation = [];
         this.current_conversation_id = null;
-        store.subscribe((state)=>this.renderConversationOfContact(state.selectedContact));
     }
 
     async init(){
         this.favouriteUserData = await this.getFavouriteUsers();
+
         if(this.favouriteUserData.length>0){
             this.avatar.src = this.favouriteUserData[0].image_path;
             this.userName.textContent = this.favouriteUserData[0].name;
@@ -49,10 +54,16 @@ class Chat{
         else{
             //ẩn hết đi
         }
+
         this.renderFavouriteUsers(this.favouriteUserData);
+        this.favouriteGroupData = await this.getFavouriteGroups();
+        this.renderFavouriteGroups(this.favouriteGroupData);
+
+
         const currentConversationId = this.favouriteUserData[0].id;
 
         this.current_conversation = await this.getCurrentConversationById(currentConversationId);
+
         this.renderConversation(this.current_conversation);
 
         this.chatinput.addEventListener('keydown',(event)=>{
@@ -84,7 +95,6 @@ class Chat{
         // fetch()
     }
     async getCurrentConversationById(conversationId){
-        // console.log(conversationId)
         //tạm
         const conversation = [
             {
@@ -111,13 +121,12 @@ class Chat{
     async getFavouriteUsers(){
         const users = [
             {
-                id:1,//id nhóm
+                id:1,
                 userId: 1,
-                name:'Nguyễn an',// tên nhóm hoặc người dùng
-                email: 'testabc@gmail.com', //bỏ
+                name:'Nguyễn an',
+                email: 'testabc@gmail.com',
                 image_path:'assets/images/users/avatar-1.jpg',
                 message: 'hi chào bạn',
-                type:'user',
             },
             {
                 id:2,
@@ -126,7 +135,6 @@ class Chat{
                 email: 'testabc@gmail.com',
                 image_path:'assets/images/users/avatar-1.jpg',
                 message:'khỏe không',
-                type:'user',
             },
             {
                 id:3,
@@ -135,7 +143,6 @@ class Chat{
                 email: 'testabc@gmail.com',
                 image_path:'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg',
                 message: 'buồn quá đi chơi không mầy',
-                type:'user',
             },
             {
                 id:4,
@@ -144,12 +151,36 @@ class Chat{
                 email: 'testabc@gmail.com',
                 image_path:'https://s120-ava-talk.zadn.vn/0/3/c/6/6/120/7525fac6e9155a92876e5c66245408b8.jpg',
                 message:'Cô giao bài tập kìa',
-                type:'user',
             },
         ]
         return users;
     }
-    ChatComponent(conversation){
+    async getFavouriteGroups(){
+        const groups = [
+            {
+                id:5,
+                name:'Nhóm 1',
+                message: 'hi chào bạn',
+            },
+            {
+                id:6,
+                name:'Nhóm 2',
+                message: 'Chào mừng đến với nhóm 2',
+            },
+            {
+                id:7,
+                name:'Nhóm 3',
+                message: 'Nhóm 3 nè mấy bạn',
+            },
+            {
+                id:8,
+                name:'Nhóm 4',
+                message: 'Còn ai chưa vô nhóm không',
+            },
+        ]
+        return groups;
+    }
+    messageElement(conversation){
         const chatListRight = document.createElement('li');
         if(conversation.user=='me')
             chatListRight.className = 'chat-list right'
@@ -187,23 +218,10 @@ class Chat{
             </div>
         </div>
         `
-        //     <a class="dropdown-item d-flex align-items-center justify-content-between reply-message" href="#" data-bs-toggle="collapse" data-bs-target=".replyCollapse">
-        //     Reply <i class="bx bx-share ms-2 text-muted"></i>
-        // </a>
-        // <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target=".forwardModal">
-        //     Forward <i class="bx bx-share-alt ms-2 text-muted"></i>
-        // </a>
-        // <a class="dropdown-item d-flex align-items-center justify-content-between copy-message" href="#" id="copy-message-1">
-        //     Copy <i class="bx bx-copy text-muted ms-2"></i>
-        // </a>
-        // <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
-        //     Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i>
-        // </a>
-        // <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
-        //     Mark as Unread <i class="bx bx-message-error text-muted ms-2"></i>
-        // </a>
         return chatListRight;
     }
+
+    // dùng để chọn chat bên contact;
     renderConversationOfContact(state){
         console.log(state)
         const userId = state.id;
@@ -221,7 +239,7 @@ class Chat{
     renderConversation(current_conversation){
         this.userConversation.innerHTML = ''
         for(let messageData of current_conversation){
-            const message = this.ChatComponent(messageData);
+            const message = this.messageElement(messageData);
             this.userConversation.appendChild(message);
         }
     }
@@ -249,7 +267,7 @@ class Chat{
             user.setAttribute('data-user-id',userData.userId);
             user.setAttribute('data-chat-id',userData.id);
             user.onclick = ()=>{
-                this.selectedUser(userData)
+                this.selectedChat(userData)
             }
             this.favouriteUsers.appendChild(user);
 
@@ -278,10 +296,73 @@ class Chat{
 
         }
     }
+
+    renderFavouriteGroups(favouriteGroupData){
+        this.favouriteGroups.innerHTML = '';
+        let image_path = 'assets/images/group.jpg';
+        for(let groupData of favouriteGroupData){
+            groupData['image_path'] = image_path;
+            const group = document.createElement('li');
+            group.style.cursor = 'pointer';
+            group.onmouseover=()=>{
+                group.style.backgroundColor = '#d5d5d5'
+            }
+            group.onmouseleave=()=>{
+                group.style.backgroundColor = 'white';
+            }
+            group.style.marginTop = '10px';
+            group.innerHTML = `
+                <div style='display:flex; gap:10px; margin-left:10px; align-items:center  '>
+                    <img src = ${groupData.image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
+                    <div style = 'display:flex; flex-direction:column'>
+                        <span style= 'font-size: medium; font-weight:600;' class = 'groupname'>${groupData.name}</span>
+                        <span >${groupData.message}</span>
+                    </div>
+                </div>
+            `
+            group.setAttribute('data-chat-id',groupData.id);
+            group.onclick = ()=>{
+                this.selectedChat(groupData)
+            }
+            this.favouriteGroups.appendChild(group);
+
+        }
+    }
+    async selectedChat(chatData){
+        let chat = this.favouriteUsers.querySelector(`li[data-chat-id="${chatData.id}"]`);
+        if(chat == null)
+            chat = this.favouriteGroups.querySelector(`li[data-chat-id="${chatData.id}"]`);
+        if(chat == null) alert('lỗi ở select chat');
+
+        this.userName.textContent = chatData.name;
+        this.profileAvatar.src = chatData.image_path;
+        this.avatar.src = chatData.image_path;
+
+        const currentConversationId = chatData.id;
+
+        this.current_conversation = await this.getCurrentConversationById(currentConversationId);
+        this.renderConversation(this.current_conversation);
+        let currentChat = this.favouriteUsers.querySelector('li.current');
+        if(currentChat === null) currentChat = this.favouriteGroups.querySelector('li.current');
+        if(currentChat !=null)
+        {
+            currentChat.style.backgroundColor = 'white';
+            currentChat.classList.remove('current');
+            currentChat.onmouseleave=()=>{
+                currentChat.style.backgroundColor = 'white';
+            }
+        }
+        chat.style.backgroundColor = '#d5d5d5';
+        chat.classList.add('current');
+        chat.onmouseleave=()=>{
+
+        }
+    }
 }
 
 class Group{
-    constructor(){
+    constructor(store){
+        this.store  = store;
         this.groupModal = document.querySelector('#addgroup-exampleModal');
         this.addGroupBtn = document.querySelector('#add-group-btn');
         this.btnClose1 = this.groupModal.querySelector('.btn-close');
@@ -293,32 +374,7 @@ class Group{
         this.btnClose1.onclick = this.btnClose2.onclick = ()=>this.closeForm();
     }
     getFriendList(){
-        const friends = [
-            {
-                id:1,
-                name:'Nguyễn an',
-                email: 'testabc@gmail.com',
-                image_path:'assets/images/users/avatar-1.jpg',
-            },
-            {
-                id:2,
-                name:'Nguyễn thị bảo',
-                email: 'testabc@gmail.com',
-            },
-            {
-                id:3,
-                name:'Anh tấn sha đô',
-                email: 'testabc@gmail.com',
-                image_path:'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg',
-            },
-            {
-                id:4,
-                name:'Anh quân sha đô',
-                email: 'testabc@gmail.com',
-                image_path:'https://s120-ava-talk.zadn.vn/0/3/c/6/6/120/7525fac6e9155a92876e5c66245408b8.jpg',
-            },
-        ]
-        return friends;
+        return this.store.getContact().getContacts();
     }
     closeForm(){
         document.body.classList.remove('modal-open');
@@ -327,7 +383,44 @@ class Group{
         this.groupModal.style.display = 'none';
         this.groupModal.classList.remove('show');
     }
-    openForm(){
+    async openForm(){
+        function createContactElement(contact){
+            let image_path = 'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg';
+            const li =document.createElement('li');
+            li.style.display='flex';
+            li.style.gap='10px';
+            li.style.alignItems = 'center';
+            // li.className = 'form-check';
+            li.innerHTML = `
+                <input type="checkbox" class="form-check-input">
+                <img src = ${image_path} alt = 'not-found' style="width: 2.4rem;height: 2.4rem; border-radius: 50%">
+                <p style="margin: 0; padding:0;">${contact.username}</p>
+            `
+            return li;
+        }
+        function createGroup(group_info){
+            let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+            console.log(JSON.stringify(group_info))
+            const response = fetch('/api/v1/group',{
+                method:'POST',
+                headers:{
+                    'content-type':'application/json',
+                    'authorization':`Bearer ${token}`
+                },
+                body:JSON.stringify(group_info)
+            }).then(async re=>{
+                const message = await re.json()
+                console.log(message.Status);
+                if(re.ok ){
+                    return 'success';
+                }
+                return 'error';
+            }).catch((error)=>{
+                console.log(error)
+                return 'error';
+            })
+            return response;
+        }
         this.background = document.createElement('div');
         this.background.className = 'modal-backdrop fade show';
         document.body.appendChild(this.background);
@@ -336,51 +429,48 @@ class Group{
         this.groupModal.style.display = 'block';
         this.groupModal.classList.add('show');
 
-        const friendTag = document.querySelector('.card-body.p-2 .simplebar-content .list-unstyled.contact-list');
-        console.log(friendTag)
-        let currentId = 1;
-        const listCheckedFriends = []
-        for( let friendData of this.getFriendList()){
+        const contactTag = this.groupModal.querySelector('.card-body.p-2 .simplebar-content .list-unstyled.contact-list');
+        contactTag.innerHTML = ''
+        const addGroupNameInput = this.groupModal.querySelector('#addgroupname-input');
+        let listCheckedFriends = []
+        let contacts = await  this.getFriendList();
+        console.log(contacts)
+        for( let contact of contacts){
             // Tạo phần tử <li>
-            const friend = document.createElement('li');
-
-            // Tạo phần tử <div> với class "form-check"
-            const formCheckDiv = document.createElement('div');
-            formCheckDiv.classList.add('form-check');
+            const li = createContactElement(contact);
 
             // Tạo phần tử <input> với class "form-check-input"
-            const input = document.createElement('input');
-            input.type = 'checkbox';
-
+            const input = li.querySelector('input');
             input.onchange = ()=>{
                 if(input.checked){
-                    listCheckedFriends.push(friendData.id);
+                    listCheckedFriends.push(contact.user_id);
                 }
                 else
-                    listCheckedFriends = listCheckedFriends.filter(fr => fr.id!=friendData.id);
+                    listCheckedFriends = listCheckedFriends.filter(id => id !== contact.user_id);
+                console.log(listCheckedFriends)
 
             }
 
-            input.classList.add('form-check-input');
-            input.id = `memberCheck${currentId}`;
+            contactTag.appendChild(li); // Gắn <li> vào danh sách <ul>
 
-            // Tạo phần tử <label> với class "form-check-label"
-            const label = document.createElement('label');
-            label.classList.add('form-check-label');
-            label.setAttribute('for', `memberCheck${currentId}`);
-            label.textContent = friendData.name; // Gắn tên bạn bè
 
-            // Gắn các phần tử vào nhau
-            formCheckDiv.appendChild(input); // Gắn <input> vào <div>
-            formCheckDiv.appendChild(label); // Gắn <label> vào <div>
-            friend.appendChild(formCheckDiv); // Gắn <div> vào <li>
-            friendTag.appendChild(friend); // Gắn <li> vào danh sách <ul>
-
-            // Tăng ID
-            currentId++;
         }
-        this.btnCreateGroup.onclick = ()=>{
-            console.log(listCheckedFriends);
+        this.btnCreateGroup.onclick = async ()=>{
+            if(addGroupNameInput.value === ''){
+                alert('Please enter group name');
+                return;
+            }
+            const groupInfo = {
+                name: addGroupNameInput.value,
+                member_ids: listCheckedFriends,
+            }
+            console.log(groupInfo)
+            const message = await createGroup(groupInfo);
+            console.log(message)
+            if(message === 'success'){
+                //tạm
+                alert('thanh cong')
+            }
         }
     }
 
@@ -391,59 +481,237 @@ class Group{
 }
 
 class Contact{
-    constructor(){
+    constructor(store){
+        this.store = store;
+        
+        this.background = document.createElement('div');
+        this.background.className = 'modal-backdrop fade show';
+
+
         this.btnOpenFormAddContact = document.querySelector('.btn.btn-soft-primary.btn-sm');
         this.addContactModal = document.querySelector('#addContact-exampleModal');
-        this.emailInput = this.addContactModal.querySelector('#addcontactemail-input');
         this.btnSearchContact = this.addContactModal.querySelector('.modal-footer .btn.btn-primary');
-
+        this.findedContactWrapper = this.addContactModal.querySelector('.contact-info');
 
         this.contactDiv = document.querySelector('.sort-contact');
         this.addMoreContactModal = document.querySelector('.modal.fade.addMoreContactModal')
-        this.background = document.createElement('div');
-        this.background.className = 'modal-backdrop fade show';
         this.btnAddMoreContact = document.querySelector('.add-more-contact');
-        this.btnClose1 = this.addMoreContactModal.querySelector('.btn-close.btn-close-white')
-        this.btnClose2 = this.addMoreContactModal.querySelector('.btn.btn-link')
+        
+
+        this.pendingContactForm = document.querySelector('#pending-contact-modal');
+        this.btnPendingContacts = document.querySelector('#btn-pending-contacts');
+        
     }
-    createContactElement(contact){
-        const li = document.createElement('li');
-        li.style.padding = '8px 24px';
-        li.style.marginTop= '8px';
-        li.innerHTML =`
-                <div style="display: flex;gap: 10px; align-items: center;">
-                    <input type="checkbox">
-                    <div style="display: flex; align-items: center; gap:10px">
-                        <img src=${contact.image_path} alt="" style="width: 2.5rem;height: 2.5rem; border-radius: 50%;">
-                        <h5 class="font-size-14 m-0">${contact.name}</h5>
-                    </div>
-                </div>`
-        return li;
+
+    //=========================== init=======================================
+    async init(){
+        const contacts = await this.getContacts();
+
+        this.renderContacts(contacts);
+
+        this.btnAddMoreContact.onclick = ()=>{
+            this.openFormAddMoreContactModel();
+        }
+
+        // gắn sự kiện cho nút xem người đang chờ kết bạn
+        this.btnPendingContacts.onclick = ()=>{
+            this.openPedingContactForm()
+        }
+
+        // gắn sự kiện tìm người liên hệ
+        this.btnSearchContact.onclick = ()=>{
+            this.findContactByEmail();
+        }
+
     }
-    async openFormAddMoreContactModel(){
-        const userChat = document.querySelector('.user-chat.w-100.overflow-hidden')
-        const currentGroupId = userChat.getAttribute('chat-id');
-        const contacts = await this.getUnJoinContactOfGroup(currentGroupId);
-        const ul = this.addMoreContactModal.querySelector('.unjoin-contacts');
+    // =======================Pending Contact================================
+    getPendingContacts(){
+        let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+        const response = fetch('/api/v1/contact/pending-received',{
+            method:'GET',
+            headers:{
+                'authorization':`Bearer ${token}`
+            }
+        }).then(async re=>{
+            if(re.ok){
+                const pendingContacts = await  re.json();
+                if(Object.keys(pendingContacts).length ===0)return [];
+                return pendingContacts.contacts;
+            }
+            return []
+        }).catch(error => {return [];})
+        return response
+    }
+
+    async openPedingContactForm(){
+        function  acceptContact(contact){
+            let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+            //Tạm
+            const response = fetch('/api/v1/contact/accept',{
+                method:'POST',
+                headers:{
+                    'content-type':'application/json',
+                    'authorization':`Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    'contact_user_id':contact.user_id
+                })
+            }).then(async re=>{
+                if(re.ok){
+                    return 'success';
+                }
+                return "error";
+            }).catch(error => {return 'error'})
+            return response
+        }
+        function denyContact(contact){
+            const data = {
+                contact_user_id: contact.user_id,
+            }
+            let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+            return fetch('/api/v1/contact',{
+                method:'DELETE',
+                headers:{
+                    'content-type':'application/json',
+                    'authorization':`Bearer ${token}`
+                },
+                body:JSON.stringify(data)
+            }).then(response=>{
+                if(response.ok){
+                    return 'success';
+                }
+                return 'error';
+            }).catch(
+                ()=> {
+                    return 'error';
+                }
+            )
+        }
+        function createPendingContactElement(contact){
+            let image_path = 'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg';
+            const li = document.createElement('li');
+            li.style.padding = '8px 24px';
+            li.style.marginTop= '8px';
+    
+            li.innerHTML =`
+                    <div style="display: flex; justify-content: space-between;gap: 10px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap:10px">
+                            <img src=${image_path} alt="" style="width: 2.5rem;height: 2.5rem; border-radius: 50%;">
+                            <h5 class="font-size-14 m-0">${contact.username}</h5>
+                        </div>
+                        <div> 
+                            <button type="button" class="btn btn-soft-primary btn-sm accept">
+                                       <i class="bx bx-plus"></i>
+                            </button>
+                            <button class="deny btn"> 
+                                <i class = 'bx bx-trash '></i>
+                            </button>
+                        </div>
+                    </div>`
+            return li;
+        }
+        
+
+
+        const contacts = await this.getPendingContacts();
+        const ul = this.pendingContactForm.querySelector('.pending-contact-list');
         ul.innerHTML = ''
         for(let contact of contacts){
-            let li = this.createContactElement(contact);
+            let li = createPendingContactElement(contact);
+            const btnAccept = li.querySelector('.accept');
+            btnAccept.onclick =async ()=>{
+                const message =await acceptContact(contact);
+                if(message === 'success'){
+                    ul.removeChild(li);
+                    const newContacts = await this.getContacts()
+                    this.renderContacts(newContacts);
+                }
+            }
+            const btnDeny = li.querySelector('.deny');
+            btnDeny.onclick = async()=>{
+                const message =await denyContact(contact);
+                if(message === 'success'){
+                    ul.removeChild(li);
+                }
+            }
             ul.appendChild(li);
         }
-        this.addMoreContactModal.classList.add('show')
+        const btnClose1 = this.pendingContactForm.querySelector('.btn.btn-link');
+        const btnClose2 = this.pendingContactForm.querySelector('.btn-close.btn-close-white');
+        btnClose1.onclick = btnClose2.onclick = ()=>{this.closePendingForm()}
+
+        this.pendingContactForm.classList.add('show');
         document.body.appendChild(this.background);
         document.body.classList.add('modal-open');
         document.body.style.overflow = 'hidden';
-        this.addMoreContactModal.style.display = 'block';
-        this.addMoreContactModal.classList.add('show');
+        this.pendingContactForm.style.display = 'block';
+        this.pendingContactForm.classList.add('show');
     }
-    closeForm(){
+    closePendingForm(){
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.removeChild(this.background)
-        this.addMoreContactModal.style.display = 'none';
-        this.addMoreContactModal.classList.remove('show');
+        this.pendingContactForm.style.display = 'none';
+        this.pendingContactForm.classList.remove('show');
     }
+// =======================================add more contact in group========================
+
+    async openFormAddMoreContactModel(){
+        function createContactElement(contact){
+            const li = document.createElement('li');
+            li.style.padding = '8px 24px';
+            li.style.marginTop= '8px';
+            li.innerHTML =`
+                    <div style="display: flex;gap: 10px; align-items: center;">
+                        <input type="checkbox">
+                        <div style="display: flex; align-items: center; gap:10px">
+                            <img src=${contact.image_path} alt="" style="width: 2.5rem;height: 2.5rem; border-radius: 50%;">
+                            <h5 class="font-size-14 m-0">${contact.name}</h5>
+                        </div>
+                    </div>`
+            return li;
+        }
+
+        function closeForm(){
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.removeChild(this.background)
+            this.addMoreContactModal.style.display = 'none';
+            this.addMoreContactModal.classList.remove('show');
+        }
+        
+        const userChat = document.querySelector('.user-chat.w-100.overflow-hidden')
+        const currentGroupId = userChat.getAttribute('chat-id');
+        const contacts = await this.getUnJoinContactOfGroup(currentGroupId);
+
+        const ul = this.addMoreContactModal.querySelector('.unjoin-contacts');
+        ul.innerHTML = ''
+        for(let contact of contacts){
+            let li = createContactElement(contact);
+            ul.appendChild(li);
+        }
+
+        const btnClose1 = this.addMoreContactModal.querySelector('.btn-close.btn-close-white')
+        const btnClose2 = this.addMoreContactModal.querySelector('.btn.btn-link');
+        btnClose1.onclick = btnClose2.onclick = ()=>{
+            closeForm();
+        }
+
+        const search = this.addMoreContactModal.querySelector('#searchMoreContactModal');
+        search.addEventListener('input',(e)=>{
+            this.seachUnjoinedContact(e)
+        })
+
+        document.body.appendChild(this.background);
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+
+
+        this.addMoreContactModal.classList.add('show');
+        this.addMoreContactModal.style.display = 'block';
+        this.addMoreContactModal.classList.add('show');
+    }
+
     seachUnjoinedContact(e){
         const ul = this.addMoreContactModal.querySelector('.unjoin-contacts');
         const list = ul.querySelectorAll('li');
@@ -455,30 +723,34 @@ class Contact{
             else li.style.display = 'none';
         }
     }
-    async init(){
-        const contacts = await this.getContacts()
-        console.log(contacts);
-        this.renderContacts(contacts);
-        this.btnAddMoreContact.onclick = ()=>{
-            this.openFormAddMoreContactModel();
-        }
-        console.log(this.btnClose1)
-        this.btnClose1.onclick = this.btnClose2.onclick = ()=>{
-            this.closeForm();
-        }
-        const search = this.addMoreContactModal.querySelector('#searchMoreContactModal');
-        console.log(search)
-        search.addEventListener('input',(e)=>{
-            this.seachUnjoinedContact(e)
-        })
-
-        this.btnSearchContact.onclick = ()=>{
-            this.findContactByEmail();
-        }
-
+    async getUnJoinContactOfGroup(){
+        return this.getContacts();//tạm
     }
-
+// ============================================================Render contacts================================
     renderContacts(contacts){
+        function deleteContact(contact){
+            const data = {
+                contact_user_id: contact.user_id,
+            }
+            let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+            return fetch('/api/v1/contact',{
+                method:'DELETE',
+                headers:{
+                    'content-type':'application/json',
+                    'authorization':`Bearer ${token}`
+                },
+                body:JSON.stringify(data)
+            }).then(response=>{
+                if(response.ok){
+                    return 'success';
+                }
+                return 'error';
+            }).catch(
+                ()=> {
+                    return 'error';
+                }
+            )
+        }
         console.log(contacts)
         this.contactDiv.innerHTML = ''
         const ul = document.createElement('ul');
@@ -488,20 +760,47 @@ class Contact{
             const li = document.createElement('li');
             li.className = 'contact';
             li.innerHTML = `
-                <img src = ${image_path}  style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
-                <span class = 'name' style= 'font-size:medium; font-weight:600;' >${contact.username}</span>
+                <div>
+                    <img src = ${image_path}  style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
+                    <span class = 'name' style= 'font-size:medium; font-weight:600;' >${contact.username}</span>
+                </div>
+                <button class = 'delete-contact' style="border:none; background-color: white">
+                    <i class="bx bx-dots-vertical-rounded"></i>
+                </button>
+                <a class = 'btn-delete'>Delete</a>
             `
-            li.onclick = ()=>this.selectContact(contact);
+            const showDeleteBtn = li.querySelector('.delete-contact');
+            showDeleteBtn.onclick = ()=>{
+              const btnDelete = li.querySelector('.btn-delete');
+              btnDelete.style.display = 'block';
+              btnDelete.onclick =async ()=>{
+                  const result = await deleteContact(contact);
+                  if(result === 'success'){
+                      ul.removeChild(li);
+                  }
+              }
+              // setTimeout(()=>{
+              //     document.addEventListener('click',function (event){
+              //         if(!btnDelete.contains(event.target)){
+              //             btnDelete.style.display = 'none';
+              //         }
+              //     })
+              //     btnDelete.addEventListener('click', function (event) {
+              //         event.stopPropagation(); // Ngăn không cho sự kiện lan ra ngoài
+              //     });
+              // },50)
+
+            }
+            // li.onclick = ()=>this.selectContact(contact);//chú ý
             ul.appendChild(li);
         }
         this.contactDiv.appendChild(ul);
     }
     selectContact(contact) {
         console.log(`Contact ${contact.name} được chọn.`);
-        store.setState({ selectedContact: contact });
+        // store.setState({ selectedContact: contact });
     }
     async getContacts(){
-        // alert('a')
         let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
         return fetch('/api/v1/contacts',{
             method:'GET',
@@ -510,29 +809,89 @@ class Contact{
                 'authorization':`Bearer ${token}`
             },
         }).then(async response => {
-            if(!response.ok)return;
+            if(!response.ok)return [];
             const contact = await response.json()
-            // console.log(contact.contacts);
+            if(Object.keys(contact).length === 0){
+                return []
+            }
             return contact.contacts;
+        }).catch(error=>{
+            console.log(error);
+            return [];
         })
     }
-    async getUnJoinContactOfGroup(){
-        return this.getContacts();//tạm
-    }
-    findContactByEmail(){
-        const email = this.emailInput.value;
 
-        //console.log(email);
+
+    // ============================================ Find contact===========================================
+    findContactByEmail(){
+        async function addContact(contact){
+            const data = {
+                contact_user_id: contact.ID,
+            }
+            let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+            return fetch('/api/v1/contact',{
+                method:'POST',
+                headers:{
+                    'content-type':'application/json',
+                    'authorization':`Bearer ${token}`
+                },
+                body:JSON.stringify(data)
+            }).then(response=>{
+                if(response.ok){
+                    return 'success';
+                }
+                return 'error';
+            }).catch(
+                ()=> {
+                    return 'error';
+                }
+            )
+        }
+
+        const emailInput = this.addContactModal.querySelector('#addcontactemail-input');
+        const email = emailInput.value;
+
+        fetch(`/api/v1/user/email/${email}`)
+            .then(async response => {
+                if(!response.ok) return;
+                const contact  = await response.json()
+
+                if(contact.error == null){
+                    const previosContact = this.findedContactWrapper.querySelector('.result');
+                    if(previosContact !=null && this.findedContactWrapper.contain(previosContact)){
+                        this.findedContactWrapper.removeChild(previosContact);
+                    }
+                    const div = this.createFindedContact(contact);
+                    const btnAdd = div.querySelector('.btn.btn-add-contact');
+                    btnAdd.onclick = async ()=>{
+                        console.log(contact)
+                        const result = await addContact(contact);
+                        if(result === 'success'){
+                            btnAdd.innerHTML = this.getCheckSvg();
+                        }
+                    }
+                    this.findedContactWrapper.appendChild(div);
+                }
+            })
+            .catch(error =>{
+                console.log(error);
+            })
+    }
+    getCheckSvg(){
+        return `<svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle opacity="0.5" cx="12" cy="12" r="10" stroke="#1C274C" stroke-width="1.5"/>
+        <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`
     }
     createFindedContact(contactInfo){
         const contact = document.createElement('div');
         contact.innerHTML = `
-           <div class="user" style="display: flex; justify-content: space-between; align-items: center;">
+           <div class="result" style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; gap:20px;">
                 <img src="assets/images/users/avatar-2.jpg" alt="" style="width: 35px; height: 35px; border-radius: 50%;">
                 <div>
-                    <p style="margin: 0;">${contactInfo.username}</p>
-                    <p style="margin: 0;">${contactInfo.email}</p>
+                    <p style="margin: 0;">${contactInfo.Name}</p>
+                    <p style="margin: 0;">${contactInfo.Email}</p>
                 </div>
             </div>
             <div>
@@ -569,10 +928,15 @@ class Setting{
 
 }
 async function main(){
-    const chat = new Chat();
-    const group = new Group();
-    const contact = new Contact();
+    const store = new Store(); // Khởi tạo trạng thái chung
+    const chat = new Chat(store);
+    const group = new Group(store);
+    const contact = new Contact(store);
+    store.setChat(chat);
+    store.setContact(contact)
+    store.setGroup(group)
     await chat.init();
     await contact.init();
 }
 main();
+
