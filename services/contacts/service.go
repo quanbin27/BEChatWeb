@@ -117,6 +117,7 @@ func (s *ContactService) GetContactsNotInGroup(ctx context.Context, userID int32
 			UserId:   targetUserID,
 			Username: user.Name,
 			Email:    user.Email,
+			Avatar:   user.Avatar,
 		})
 	}
 
@@ -139,6 +140,7 @@ func (s *ContactService) GetContacts(ctx context.Context, userID int32) ([]*cont
 			UserId:   user.ID,
 			Username: user.Name,
 			Email:    user.Email,
+			Avatar:   user.Avatar,
 		})
 	}
 	return ListContacts, nil
@@ -169,6 +171,7 @@ func (s *ContactService) GetPendingSentContacts(ctx context.Context, userID int3
 			UserId:   user.ID,
 			Username: user.Name,
 			Email:    user.Email,
+			Avatar:   user.Avatar,
 		})
 	}
 
@@ -199,6 +202,7 @@ func (s *ContactService) GetPendingReceivedContacts(ctx context.Context, userID 
 			UserId:   user.ID,
 			Username: user.Name,
 			Email:    user.Email,
+			Avatar:   user.Avatar,
 		})
 	}
 

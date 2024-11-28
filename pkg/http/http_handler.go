@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
@@ -52,6 +53,9 @@ func NewHub() *Hub {
 		register:   make(chan *WebSocketClient),
 		unregister: make(chan *WebSocketClient),
 	}
+}
+func (h *Hub) SendMessage(message []byte) {
+	h.broadcast <- message
 }
 
 func (h *Hub) Run() {
@@ -483,7 +487,16 @@ func (h *HttpHandler) SendMessageHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to send message: " + err.Error()})
 	}
-
+	messageData := map[string]interface{}{
+		"group_id": payload.GroupID,
+		"user_id":  userID,
+		"content":  payload.Content,
+	}
+	messageBytes, err := json.Marshal(messageData)
+	h.hub.SendMessage(messageBytes)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
+	}
 	return c.JSON(http.StatusOK, res)
 }
 func (h *HttpHandler) DeleteMessageHandler(c echo.Context) error {
