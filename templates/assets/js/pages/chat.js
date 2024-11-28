@@ -20,6 +20,12 @@ class Store {
     getRroup(){
         return this.group;
     }
+    setProfile(profile){
+        this.profile = profile;
+    }
+    getProfile(){
+        return this.profile;
+    }
 }
 
 
@@ -45,7 +51,6 @@ class Chat{
 
     async init(){
         this.favouriteUserData = await this.getFavouriteUsers();
-        console.log(this.favouriteUserData)
         if(this.favouriteUserData.length>0){
             this.avatar.src = this.favouriteUserData[0].image_path;
             this.userName.textContent = this.favouriteUserData[0].name;
@@ -61,11 +66,7 @@ class Chat{
 
 
         if(this.favouriteUserData.length>0){
-            const currentConversationId = this.favouriteUserData[0].id;
-        
-            this.current_conversation = await this.getCurrentConversationById(currentConversationId);
-        
-            this.renderConversation(this.current_conversation);
+            this.selectedUser(this.favouriteUserData[0])
         }
             
 
@@ -75,51 +76,56 @@ class Chat{
                 this.btnSend.onclick();
             }
         })
-        this.btnSend.onclick = (event)=>{
+        this.btnSend.onclick = async (event)=>{
             event.preventDefault();
             if(this.chatinput.value == '')
                 return;
-            this.current_conversation.push({
-                id:null,
-                user:'me',
-                message:this.chatinput.value
-            })
+            let newMessage = {
+                group_id: 34,
+                content: this.chatinput.value, 
+            }
+            const response = await this.sendMessage(newMessage);
+            if(response === 'error'){
+                return;
+            }
+            console.log(this.store.group.current_group_id)
+            newMessage = {
+                ID: response.MessageID,
+                UserID: this.store.profile.user_id,
+                GroupID: this.store.group.current_group_id,
+                Content: newMessage.content,
+            }
+            this.current_conversation.push(newMessage);
+
             this.chatinput.value = '';
             this.renderConversation(this.current_conversation);
         }
 
     }
-    sendMessage(messageData){
-        // messageData = {
-        //     conversationId:1 ,
-        //     message: 'xin chào',
-        //     // xuống đó tự biết người gửi mà xác định;
-        // }
-        // fetch()
+    async sendMessage(messageData){
+        let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+        return fetch('/api/v1/message',{
+            method:'POST',
+            headers:{
+                'content-type':'application/json',
+                'authorization':`Bearer ${token}`
+            },
+            body:JSON.stringify(messageData)
+        })
+        .then(async response => {
+            if(response.ok){
+                const responseJson = await response.json();
+                return responseJson;
+            }
+            return 'error';
+        })
+        .catch(()=>{
+            return 'error';
+        })
+
     }
     async getCurrentConversationById(conversationId){
-        //tạm
-        // const conversation = [
-        //     {
-        //         id:1,//id user
-        //         user:'me',//tên user
-        //         message: 'xin chào bạn nhé', //message
-        //         time: '20:08pm'//giờ
-        //     },
-        //     {
-        //         id:2,
-        //         user:'Nguyễn an',
-        //         message: 'Chào bạn nha',
-        //         time: '20:08pm'//giờ
-        //     },
-        //     {
-        //         id:3,
-        //         user:'me',
-        //         message: 'Một ngày vui vẻ nhé',
-        //         time: '20:08pm'//giờ
-        //     }
-        // ]
-        // return conversation;
+    
         let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
         const conversation = fetch(`/api/v1/group/${conversationId}/message`,{
             method:'get',
@@ -129,51 +135,16 @@ class Chat{
         })
         .then(async response=>{
             if(response.ok){
-                const groups = await response.json();
-                if(Object.keys(groups).length == 0) return [];
-                console.log(groups)
-                return groups.groups;
+                const conversationData = await response.json();
+                if(Object.keys(conversationData).length == 0) return [];
+                console.log(conversationData)
+                return conversationData.Messages;
             }
             return []
         }).catch(()=>{return []})
         return conversation;
     }
     async getFavouriteUsers(){
-        // const users = [
-        //     {
-        //         id:1,
-        //         userId: 1,
-        //         name:'Nguyễn an',
-        //         email: 'testabc@gmail.com',
-        //         image_path:'assets/images/users/avatar-1.jpg',
-        //         message: 'hi chào bạn',
-        //     },
-        //     {
-        //         id:2,
-        //         userId: 2,
-        //         name:'Nguyễn thị bảo',
-        //         email: 'testabc@gmail.com',
-        //         image_path:'assets/images/users/avatar-1.jpg',
-        //         message:'khỏe không',
-        //     },
-        //     {
-        //         id:3,
-        //         userId: 3,
-        //         name:'Anh tấn sha đô',
-        //         email: 'testabc@gmail.com',
-        //         image_path:'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg',
-        //         message: 'buồn quá đi chơi không mầy',
-        //     },
-        //     {
-        //         id:4,
-        //         userId: 4,
-        //         name:'Anh quân sha đô',
-        //         email: 'testabc@gmail.com',
-        //         image_path:'https://s120-ava-talk.zadn.vn/0/3/c/6/6/120/7525fac6e9155a92876e5c66245408b8.jpg',
-        //         message:'Cô giao bài tập kìa',
-        //     },
-        // ]
-        // return users;
         let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
         const users = fetch('/api/v1/user/group-chat/2',{
             method:'get',
@@ -185,7 +156,12 @@ class Chat{
             if(response.ok){
                 const groups = await response.json();
                 if(Object.keys(groups).length == 0)return [];
-                console.log(groups)
+                // let fullGroupData = []
+                for(let gr of groups.groups){
+                    const otherUserId = gr.other_user_id;
+                    const otherUserInfo = await this.store.contact.getContactInfo(otherUserId);
+                    gr.image_path = otherUserInfo.avatar;
+                }
                 return groups.groups;
             }
             return []
@@ -193,29 +169,6 @@ class Chat{
         return users;
     }
     async getFavouriteGroups(){
-        // const groups = [
-        //     {
-        //         id:5,
-        //         name:'Nhóm 1',
-        //         message: 'hi chào bạn',
-        //     },
-        //     {
-        //         id:6,
-        //         name:'Nhóm 2',
-        //         message: 'Chào mừng đến với nhóm 2',
-        //     },
-        //     {
-        //         id:7,
-        //         name:'Nhóm 3',
-        //         message: 'Nhóm 3 nè mấy bạn',
-        //     },
-        //     {
-        //         id:8,
-        //         name:'Nhóm 4',
-        //         message: 'Còn ai chưa vô nhóm không',
-        //     },
-        // ]
-        // return groups;
         let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
         const groups = fetch('/api/v1/user/group-chat/3',{
             method:'get',
@@ -227,7 +180,7 @@ class Chat{
             if(response.ok){
                 const groups = await response.json();
                 if(Object.keys(groups).length == 0 )return [];
-                console.log(groups)
+               
                 return groups.groups;
             }
             return []
@@ -236,7 +189,7 @@ class Chat{
     }
     messageElement(conversation){
         const chatListRight = document.createElement('li');
-        if(conversation.user=='me')
+        if(conversation.UserID===this.store.profile.user_id)//tạm
             chatListRight.className = 'chat-list right'
         else
             chatListRight.className = 'chat-list left';
@@ -249,7 +202,7 @@ class Chat{
             <div class="user-chat-content">
                 <div class="ctext-wrap">
                     <div class="ctext-wrap-content">
-                        <p class="mb-0 ctext-content">${conversation.message}</p>
+                        <p class="mb-0 ctext-content">${conversation.Content}</p>
                     </div>
                     <div class="dropdown align-self-start message-box-drop">
                         <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -277,7 +230,7 @@ class Chat{
 
     // dùng để chọn chat bên contact;
     renderConversationOfContact(state){
-        console.log(state)
+
         const userId = state.id;
         let userData = this.favouriteUserData.find(user=>user.userId == userId);
         if(userData==null){
@@ -291,6 +244,7 @@ class Chat{
         this.selectedUser(userData);
     }
     renderConversation(current_conversation){
+        console.log(current_conversation)
         this.userConversation.innerHTML = ''
         for(let messageData of current_conversation){
             const message = this.messageElement(messageData);
@@ -301,10 +255,11 @@ class Chat{
         // tạm
     }
 
-    renderFavouriteUsers(favouriteUserData){
+    async renderFavouriteUsers(favouriteUserData){
+
         this.favouriteUsers.innerHTML = '';
         for(let userData of favouriteUserData){
-            // const 
+
             const user = document.createElement('li');
             user.style.cursor = 'pointer';
             user.onmouseover=()=>{
@@ -327,7 +282,7 @@ class Chat{
                     </div>
                 </div>
             `
-            // user.setAttribute('data-user-id',userData.userId);//chua co
+            user.setAttribute('data-user-id',userData.other_user_id);//chua co
             user.setAttribute('data-chat-id',userData.group_id);
             user.onclick = ()=>{
                 this.selectedUser(userData)
@@ -337,12 +292,12 @@ class Chat{
         }
     }
     async selectedUser(userData){
-        console.log(userData)
+        this.store.group.current_group_id = userData.group_id;
         let user = this.favouriteUsers.querySelector(`li[data-chat-id="${userData.group_id}"]`);
         if(user == null)
             user = this.favouriteGroups.querySelector(`li[data-chat-id="${userData.group_id}"]`);
         if(user == null) alert('lỗi ở select chat');
-        console.log(user);
+       
 
         this.userName.textContent = userData.name;
         this.profileAvatar.src = userData.image_path;
@@ -399,6 +354,8 @@ class Chat{
         }
     }
     async selectedChat(chatData){
+        this.store.group.current_group_id = chatData.group_id;
+
         let chat = this.favouriteUsers.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
         if(chat == null)
             chat = this.favouriteGroups.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
@@ -442,6 +399,8 @@ class Group{
             this.openForm();
         }
         this.btnClose1.onclick = this.btnClose2.onclick = ()=>this.closeForm();
+
+        this.current_group_id = null;
     }
     getFriendList(){
         return this.store.getContact().getContacts();
@@ -470,7 +429,7 @@ class Group{
         }
         function createGroup(group_info){
             let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
-            console.log(JSON.stringify(group_info))
+          
             const response = fetch('/api/v1/group',{
                 method:'POST',
                 headers:{
@@ -480,13 +439,13 @@ class Group{
                 body:JSON.stringify(group_info)
             }).then(async re=>{
                 const message = await re.json()
-                console.log(message.Status);
+              
                 if(re.ok ){
                     return 'success';
                 }
                 return 'error';
             }).catch((error)=>{
-                console.log(error)
+               
                 return 'error';
             })
             return response;
@@ -504,7 +463,7 @@ class Group{
         const addGroupNameInput = this.groupModal.querySelector('#addgroupname-input');
         let listCheckedFriends = []
         let contacts = await  this.getFriendList();
-        console.log(contacts)
+       
         for( let contact of contacts){
             // Tạo phần tử <li>
             const li = createContactElement(contact);
@@ -517,7 +476,7 @@ class Group{
                 }
                 else
                     listCheckedFriends = listCheckedFriends.filter(id => id !== contact.user_id);
-                console.log(listCheckedFriends)
+               
 
             }
 
@@ -534,9 +493,8 @@ class Group{
                 name: addGroupNameInput.value,
                 member_ids: listCheckedFriends,
             }
-            console.log(groupInfo)
             const message = await createGroup(groupInfo);
-            console.log(message)
+          
             if(message === 'success'){
                 //tạm
                 alert('thanh cong')
@@ -833,7 +791,7 @@ class Contact{
                 }
             )
         }
-        console.log(contacts)
+      
         this.contactDiv.innerHTML = ''
         const ul = document.createElement('ul');
         ul.className = 'list-unstyled';
@@ -879,7 +837,7 @@ class Contact{
         this.contactDiv.appendChild(ul);
     }
     selectContact(contact) {
-        console.log(`Contact ${contact.name} được chọn.`);
+        // console.log(`Contact ${contact.name} được chọn.`);
         // store.setState({ selectedContact: contact });
     }
     async getContacts(){
@@ -946,7 +904,7 @@ class Contact{
                     const div = this.createFindedContact(contact);
                     const btnAdd = div.querySelector('.btn.btn-add-contact');
                     btnAdd.onclick = async ()=>{
-                        console.log(contact)
+                       
                         const result = await addContact(contact);
                         if(result === 'success'){
                             btnAdd.innerHTML = this.getCheckSvg();
@@ -1004,7 +962,28 @@ class Contact{
     }
 }
 class Profile{
-
+    constructor(store){
+        this.store = store;
+        this.user_id = 2;//tạm
+    }
+    async init(){
+        await this.getProfile();
+    }
+    async getProfile(){
+        let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+        return  fetch('/api/v1/user/me',{
+            method:'GET',
+            headers:{
+                'content-type':'application/json',
+                'authorization':`Bearer ${token}`
+            }
+        }).then(async response=>{
+            console.log(response)
+            if(response.ok){
+                console.log(await response.json())
+            }
+        })
+    }
 }
 class Setting{
 
@@ -1014,9 +993,12 @@ async function main(){
     const chat = new Chat(store);
     const group = new Group(store);
     const contact = new Contact(store);
+    const profile = new Profile(store);
     store.setChat(chat);
     store.setContact(contact)
     store.setGroup(group)
+    store.setProfile(profile);
+    await profile.init();
     await chat.init();
     await contact.init();
 }
