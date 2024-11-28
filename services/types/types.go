@@ -18,6 +18,7 @@ type UserStore interface {
 	UpdatePassword(userID int32, password string) error
 	GetNameByID(id int32) (string, error)
 	GetUsersByIDs(userIDs []int32) ([]User, error)
+	UpdateAvatar(userID int32, avatar string) error
 }
 type GroupStore interface {
 	ChangeNameGroup(id int32, name string) error
@@ -31,6 +32,7 @@ type GroupStore interface {
 	GetRoleIDByUserAndGroup(userID, groupID int32) (int32, error)
 	GetListMembers(groupID int32) ([]Member, error)
 	ChangeAdmin(groupID int32, currentAdminID int32, newAdminID int32) error
+	GetUserGroupsByFilter(userID int32, memberCount int32) ([]*GroupWithMessage, error)
 }
 type MessageStore interface {
 	SendMessage(msg *Message) (int32, time.Time, error)
@@ -48,6 +50,7 @@ type ContactStore interface {
 	GetPendingReceivedContacts(userID int32) ([]Contact, error)
 	GetPendingSentContacts(userID int32) ([]Contact, error)
 	GetFriendIDs(userID int32) ([]int32, error)
+	GetContactsNotInGroup(userID int32, groupID int32) ([]Contact, error)
 }
 type UserService interface {
 	CreateUser(ctx context.Context, user *users.RegisterRequest) error
@@ -56,6 +59,7 @@ type UserService interface {
 	UpdatePassword(ctx context.Context, update *users.ChangePasswordRequest) error
 	GetUserByID(ctx context.Context, id int32) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	UpdateAvatar(ctx context.Context, userID int32, avatar string) (string, error)
 }
 type GroupService interface {
 	CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) error
@@ -67,6 +71,7 @@ type GroupService interface {
 	ChangeAdmin(ctx context.Context, req *groups.ChangeAdminRequest) error
 	GetListMembers(ctx context.Context, groupID int32) ([]Member, error)
 	LeaveGroup(ctx context.Context, req *groups.LeaveGroupRequest) error
+	GetUserGroupsWithLatestMessage(ctx context.Context, userID, memberCount int32) ([]*GroupWithMessage, error)
 	GetListUserGroups(ctx context.Context, userID int32) ([]Group, error)
 }
 type MessageService interface {
@@ -83,6 +88,7 @@ type ContactService interface {
 	GetPendingSentContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error)
 	GetPendingReceivedContacts(ctx context.Context, userID int32) ([]*contacts.Contact, error)
 	RejectContact(ctx context.Context, userID, contactUserID int32) error
+	GetContactsNotInGroup(ctx context.Context, userID int32, groupID int32) ([]*contacts.Contact, error)
 }
 
 // ------ USER ------
@@ -187,6 +193,12 @@ type SendMessagePayload struct {
 }
 type DeleteMessagePayload struct {
 	MessageID int32 `json:"message_id" validate:"required"`
+}
+type GroupWithMessage struct {
+	GroupID           int32  `json:"group_id"`
+	GroupName         string `json:"group_name"`
+	LatestMessage     string `json:"latest_message"`
+	LatestMessageTime string `json:"latest_message_time"`
 }
 
 // ------ CONTACT-------

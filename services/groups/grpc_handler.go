@@ -48,6 +48,25 @@ func (h *GroupsGrpcHandler) ChangeNameGroup(ctx context.Context, req *groups.Cha
 		Status: "success",
 	}, nil
 }
+func (h *GroupsGrpcHandler) GetUserGroupsWithLatestMessage(ctx context.Context, req *groups.GetUserGroupsRequest) (*groups.GetUserGroupsResponse, error) {
+	groupsList, err := h.groupService.GetUserGroupsWithLatestMessage(ctx, req.UserId, req.MemberCount)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get user groups: %v", err)
+	}
+
+	var groupResponses []*groups.GroupWithMessage
+	for _, group := range groupsList {
+		groupResponses = append(groupResponses, &groups.GroupWithMessage{
+			GroupId:           group.GroupID,
+			GroupName:         group.GroupName,
+			LatestMessage:     group.LatestMessage,
+			LatestMessageTime: group.LatestMessageTime,
+		})
+	}
+
+	return &groups.GetUserGroupsResponse{Groups: groupResponses}, nil
+}
+
 func (h *GroupsGrpcHandler) GetGroupInfo(ctx context.Context, req *groups.GetGroupInfoRequest) (*groups.Group, error) {
 	dbGroup, err := h.groupService.GetGroupInfo(ctx, req.GroupID)
 	if err != nil {

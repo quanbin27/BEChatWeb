@@ -25,6 +25,7 @@ func (s *HttpServer) Run() error {
 	viewHandler.RegisterRoutes(e)
 	subrouter := e.Group("/api/v1")
 	httpHandler := NewHttpHandler(conn)
+	go httpHandler.hub.Run()
 	httpHandler.RegisterRoutes(subrouter)
 	log.Println("Listening on: ", s.addr)
 	return http.ListenAndServe(s.addr, e)

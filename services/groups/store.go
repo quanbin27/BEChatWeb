@@ -113,3 +113,43 @@ func (s *GroupStore) GetListUserGroups(userID int32) ([]types.Group, error) {
 	}
 	return groups, nil
 }
+func (s *GroupStore) GetUserGroupsByFilter(userID int32, memberCount int32) ([]*types.GroupWithMessage, error) {
+	var groupsWithMessages []*types.GroupWithMessage
+
+	// Truy vấn lấy thông tin nhóm và tin nhắn mới nhất
+	query := `
+		SELECT 
+			g.id AS group_id,
+			g.name AS group_name,
+			(SELECT m.content FROM messages m WHERE m.group_id = g.id ORDER BY m.created_at DESC LIMIT 1) AS latest_message,
+			MAX(m.created_at) AS latest_message_time,
+			g.member_count  
+		FROM 
+			` + "`groups`" + ` g
+		JOIN 
+			group_details gd ON g.id = gd.group_id
+		LEFT JOIN 
+			messages m ON g.id = m.group_id
+		WHERE 
+			gd.user_id = ?
+		GROUP BY 
+			g.id, g.name, g.member_count
+	`
+
+	// Xử lý filter theo số lượng thành viên
+	if memberCount == 2 {
+		query += ` HAVING g.member_count = 2`
+	} else if memberCount > 2 {
+		query += ` HAVING g.member_count > 2`
+	}
+
+	query += ` ORDER BY latest_message_time DESC`
+
+	// Thực hiện truy vấn và quét kết quả
+	err := s.db.Raw(query, userID).Scan(&groupsWithMessages).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return groupsWithMessages, nil
+}

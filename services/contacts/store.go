@@ -79,6 +79,31 @@ func (s *ContactStore) GetFriendIDs(userID int32) ([]int32, error) {
 	}
 	return friendIDs, nil
 }
+func (s *ContactStore) GetContactsNotInGroup(userID int32, groupID int32) ([]types.Contact, error) {
+	var contacts []types.Contact
+
+	// Subquery: lấy danh sách user_id đã có trong group
+	subQuery := s.db.Model(&types.GroupDetail{}).
+		Select("user_id").
+		Where("group_id = ?", groupID)
+
+	// Main query: lấy danh sách contact đã ACCEPTED nhưng chưa ở trong group
+	err := s.db.Model(&types.Contact{}).
+		Where(`
+			(
+				(user_id = ? AND contact_user_id NOT IN (?)) OR 
+				(contact_user_id = ? AND user_id NOT IN (?))
+			) AND 
+			status = ?`,
+			userID, subQuery, userID, subQuery, "ACCEPTED").
+		Find(&contacts).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return contacts, nil
+}
 
 func (s *ContactStore) GetPendingSentContacts(userID int32) ([]types.Contact, error) {
 	var contacts []types.Contact
