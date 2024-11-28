@@ -107,6 +107,7 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.POST("/changeInfo", h.ChangeInfo, auth.WithJWTAuth())
 	e.POST("/changePassword", h.ChangePassword, auth.WithJWTAuth())
 	e.GET("/user/:id", h.GetUserInfo)
+	e.GET("/user/me", h.GetMyInfo, auth.WithJWTAuth())
 	e.POST("/user/update-avatar", h.UpdateAvatarHandler, auth.WithJWTAuth())
 	e.GET("/user/email/:email", h.GetUserByEmail)
 	e.GET("/group/:id", h.GetGroupInfo)
@@ -861,6 +862,19 @@ func (h *HttpHandler) GetUserInfo(c echo.Context) error {
 	defer cancel()
 	res, err := userClient.GetUserInfo(ctx, &users.GetUserInfoRequest{
 		ID: int32(userID),
+	})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, res)
+
+}
+func (h *HttpHandler) GetMyInfo(c echo.Context) error {
+	userClient := users.NewUserServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	res, err := userClient.GetUserInfo(ctx, &users.GetUserInfoRequest{
+		ID: c.Get("user_id").(int32),
 	})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
