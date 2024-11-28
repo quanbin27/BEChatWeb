@@ -61,6 +61,7 @@ func (h *GroupsGrpcHandler) GetUserGroupsWithLatestMessage(ctx context.Context, 
 			GroupName:         group.GroupName,
 			LatestMessage:     group.LatestMessage,
 			LatestMessageTime: group.LatestMessageTime,
+			OtherUserId:       group.OtherUserID,
 		})
 	}
 

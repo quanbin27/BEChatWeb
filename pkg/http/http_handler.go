@@ -180,7 +180,6 @@ func (h *HttpHandler) GetUserGroupsWithLatestMessage(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-
 	return c.JSON(http.StatusOK, res)
 }
 
