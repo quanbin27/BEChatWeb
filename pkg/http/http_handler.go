@@ -107,6 +107,7 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.POST("/changeInfo", h.ChangeInfo, auth.WithJWTAuth())
 	e.POST("/changePassword", h.ChangePassword, auth.WithJWTAuth())
 	e.GET("/user/:id", h.GetUserInfo)
+	e.POST("/user/update-avatar", h.UpdateAvatarHandler, auth.WithJWTAuth())
 	e.GET("/user/email/:email", h.GetUserByEmail)
 	e.GET("/group/:id", h.GetGroupInfo)
 	e.POST("/group", h.CreateGroupHandler, auth.WithJWTAuth())
@@ -118,6 +119,7 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.POST("/group/:id/leave", h.LeaveGroupHandler, auth.WithJWTAuth())
 	e.GET("/group/:id/member", h.GetListMemberHandler, auth.WithJWTAuth())
 	e.GET("/user/group", h.GetListUserGroupsHandler, auth.WithJWTAuth())
+	e.GET("/user/group-chat/:member_count", h.GetUserGroupsWithLatestMessage, auth.WithJWTAuth())
 	e.GET("/group/:id/message", h.GetMessagesHandler, auth.WithJWTAuth())
 	e.POST("/message", h.SendMessageHandler, auth.WithJWTAuth())
 	e.DELETE("/message", h.DeleteMessageHandler, auth.WithJWTAuth())
@@ -133,6 +135,7 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.GET("/ws", h.WebSocketHandler)
 
 }
+
 func (h *HttpHandler) WebSocketHandler(c echo.Context) error {
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -157,6 +160,30 @@ func (h *HttpHandler) WebSocketHandler(c echo.Context) error {
 
 	return nil
 }
+func (h *HttpHandler) GetUserGroupsWithLatestMessage(c echo.Context) error {
+	userID := c.Get("user_id").(int32)
+
+	// Gọi gRPC service
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+	memberCount := c.Param("member_count")
+	if memberCount == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Missing memberCount"})
+	}
+
+	memberCountInt, err := strconv.Atoi(memberCount)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid memberCountInt"})
+	}
+	groupServiceClient := groups.NewGroupServiceClient(h.grpcClient)
+	res, err := groupServiceClient.GetUserGroupsWithLatestMessage(ctx, &groups.GetUserGroupsRequest{UserId: userID, MemberCount: int32(memberCountInt)})
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
 func (h *HttpHandler) GetContactsNotInGroupHandler(c echo.Context) error {
 	userID := c.Get("user_id").(int32)
 	if userID <= 0 {
@@ -186,6 +213,30 @@ func (h *HttpHandler) GetContactsNotInGroupHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, res)
+}
+func (h *HttpHandler) UpdateAvatarHandler(c echo.Context) error {
+	userID := c.Get("user_id").(int32) // Lấy user_id từ JWT token
+	var req struct {
+		AvatarBase64 string `json:"avatar_base64"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
+
+	userClient := users.NewUserServiceClient(h.grpcClient)
+	res, err := userClient.UpdateUserAvatar(ctx, &users.UpdateUserAvatarRequest{
+		ID:     userID,
+		Avatar: req.AvatarBase64,
+	})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": res.Status})
 }
 
 func (h *HttpHandler) GetPendingSentContactsHandler(c echo.Context) error {

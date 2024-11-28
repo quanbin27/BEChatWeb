@@ -49,6 +49,10 @@ func (s *UserStore) GetUserByID(id int32) (*types.User, error) {
 	}
 	return &user, nil
 }
+func (s *UserStore) UpdateAvatar(userID int32, avatar string) error {
+	err := s.db.Model(&types.User{}).Where("id = ?", userID).Update("avatar", avatar).Error
+	return err
+}
 
 func (UserStore *UserStore) CreateUser(user *types.User) error {
 	result := UserStore.db.Create(&user)

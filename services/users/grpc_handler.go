@@ -5,6 +5,8 @@ import (
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/users"
 	"github.com/quanbin27/gRPC-Web-Chat/services/types"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -73,6 +75,7 @@ func (h *UsersGrpcHandler) GetUserInfo(ctx context.Context, req *users.GetUserIn
 		Name:      dbUser.Name,
 		Email:     dbUser.Email,
 		Bio:       dbUser.Bio,
+		Avatar:    dbUser.Avatar,
 		CreatedAt: timestamppb.New(dbUser.CreatedAt),
 	}
 	return res, nil
@@ -87,7 +90,15 @@ func (h *UsersGrpcHandler) GetUserInfoByEmail(ctx context.Context, req *users.Ge
 		Name:      dbUser.Name,
 		Email:     dbUser.Email,
 		Bio:       dbUser.Bio,
+		Avatar:    dbUser.Avatar,
 		CreatedAt: timestamppb.New(dbUser.CreatedAt),
 	}
 	return res, nil
+}
+func (h *UsersGrpcHandler) UpdateUserAvatar(ctx context.Context, req *users.UpdateUserAvatarRequest) (*users.UpdateUserAvatarResponse, error) {
+	message, err := h.userService.UpdateAvatar(ctx, req.ID, req.Avatar)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Failed to update avatar")
+	}
+	return &users.UpdateUserAvatarResponse{Status: message}, nil
 }

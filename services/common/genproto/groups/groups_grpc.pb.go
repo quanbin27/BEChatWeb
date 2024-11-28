@@ -19,16 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GroupService_ChangeNameGroup_FullMethodName  = "/GroupService/ChangeNameGroup"
-	GroupService_CreateGroup_FullMethodName      = "/GroupService/CreateGroup"
-	GroupService_DeleteGroup_FullMethodName      = "/GroupService/DeleteGroup"
-	GroupService_GetGroupInfo_FullMethodName     = "/GroupService/GetGroupInfo"
-	GroupService_AddMember_FullMethodName        = "/GroupService/AddMember"
-	GroupService_KickMember_FullMethodName       = "/GroupService/KickMember"
-	GroupService_ChangeAdmin_FullMethodName      = "/GroupService/ChangeAdmin"
-	GroupService_LeaveGroup_FullMethodName       = "/GroupService/LeaveGroup"
-	GroupService_GetListMember_FullMethodName    = "/GroupService/GetListMember"
-	GroupService_GetListUserGroup_FullMethodName = "/GroupService/GetListUserGroup"
+	GroupService_ChangeNameGroup_FullMethodName                = "/GroupService/ChangeNameGroup"
+	GroupService_CreateGroup_FullMethodName                    = "/GroupService/CreateGroup"
+	GroupService_DeleteGroup_FullMethodName                    = "/GroupService/DeleteGroup"
+	GroupService_GetGroupInfo_FullMethodName                   = "/GroupService/GetGroupInfo"
+	GroupService_AddMember_FullMethodName                      = "/GroupService/AddMember"
+	GroupService_KickMember_FullMethodName                     = "/GroupService/KickMember"
+	GroupService_ChangeAdmin_FullMethodName                    = "/GroupService/ChangeAdmin"
+	GroupService_LeaveGroup_FullMethodName                     = "/GroupService/LeaveGroup"
+	GroupService_GetListMember_FullMethodName                  = "/GroupService/GetListMember"
+	GroupService_GetListUserGroup_FullMethodName               = "/GroupService/GetListUserGroup"
+	GroupService_GetUserGroupsWithLatestMessage_FullMethodName = "/GroupService/GetUserGroupsWithLatestMessage"
 )
 
 // GroupServiceClient is the client API for GroupService service.
@@ -45,6 +46,7 @@ type GroupServiceClient interface {
 	LeaveGroup(ctx context.Context, in *LeaveGroupRequest, opts ...grpc.CallOption) (*LeaveGroupResponse, error)
 	GetListMember(ctx context.Context, in *GetListMemberRequest, opts ...grpc.CallOption) (*GetListMemberReponse, error)
 	GetListUserGroup(ctx context.Context, in *GetListUserGroupRequest, opts ...grpc.CallOption) (*GetListUserGroupReponse, error)
+	GetUserGroupsWithLatestMessage(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GetUserGroupsResponse, error)
 }
 
 type groupServiceClient struct {
@@ -155,6 +157,16 @@ func (c *groupServiceClient) GetListUserGroup(ctx context.Context, in *GetListUs
 	return out, nil
 }
 
+func (c *groupServiceClient) GetUserGroupsWithLatestMessage(ctx context.Context, in *GetUserGroupsRequest, opts ...grpc.CallOption) (*GetUserGroupsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserGroupsResponse)
+	err := c.cc.Invoke(ctx, GroupService_GetUserGroupsWithLatestMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GroupServiceServer is the server API for GroupService service.
 // All implementations must embed UnimplementedGroupServiceServer
 // for forward compatibility.
@@ -169,6 +181,7 @@ type GroupServiceServer interface {
 	LeaveGroup(context.Context, *LeaveGroupRequest) (*LeaveGroupResponse, error)
 	GetListMember(context.Context, *GetListMemberRequest) (*GetListMemberReponse, error)
 	GetListUserGroup(context.Context, *GetListUserGroupRequest) (*GetListUserGroupReponse, error)
+	GetUserGroupsWithLatestMessage(context.Context, *GetUserGroupsRequest) (*GetUserGroupsResponse, error)
 	mustEmbedUnimplementedGroupServiceServer()
 }
 
@@ -208,6 +221,9 @@ func (UnimplementedGroupServiceServer) GetListMember(context.Context, *GetListMe
 }
 func (UnimplementedGroupServiceServer) GetListUserGroup(context.Context, *GetListUserGroupRequest) (*GetListUserGroupReponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetListUserGroup not implemented")
+}
+func (UnimplementedGroupServiceServer) GetUserGroupsWithLatestMessage(context.Context, *GetUserGroupsRequest) (*GetUserGroupsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserGroupsWithLatestMessage not implemented")
 }
 func (UnimplementedGroupServiceServer) mustEmbedUnimplementedGroupServiceServer() {}
 func (UnimplementedGroupServiceServer) testEmbeddedByValue()                      {}
@@ -410,6 +426,24 @@ func _GroupService_GetListUserGroup_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GroupService_GetUserGroupsWithLatestMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserGroupsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GroupServiceServer).GetUserGroupsWithLatestMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GroupService_GetUserGroupsWithLatestMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GroupServiceServer).GetUserGroupsWithLatestMessage(ctx, req.(*GetUserGroupsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GroupService_ServiceDesc is the grpc.ServiceDesc for GroupService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -456,6 +490,10 @@ var GroupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetListUserGroup",
 			Handler:    _GroupService_GetListUserGroup_Handler,
+		},
+		{
+			MethodName: "GetUserGroupsWithLatestMessage",
+			Handler:    _GroupService_GetUserGroupsWithLatestMessage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

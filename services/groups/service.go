@@ -12,11 +12,12 @@ import (
 )
 
 type GroupService struct {
-	groupStore types.GroupStore
+	groupStore   types.GroupStore
+	messageStore types.MessageStore
 }
 
-func NewGroupService(groupStore types.GroupStore) *GroupService {
-	return &GroupService{groupStore: groupStore}
+func NewGroupService(groupStore types.GroupStore, messageStore types.MessageStore) *GroupService {
+	return &GroupService{groupStore: groupStore, messageStore: messageStore}
 }
 func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) error {
 	if req.Name == "" {
@@ -29,6 +30,15 @@ func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupR
 		CreatedAt:   time.Now(),
 	}
 	groupID, err := s.groupStore.CreateGroup(group)
+	if err != nil {
+		return err
+	}
+	fisrtMessage := &types.Message{
+		UserID:  req.UserID,
+		GroupID: groupID,
+		Content: "You have been added to the group " + req.Name + " .",
+	}
+	_, _, err = s.messageStore.SendMessage(fisrtMessage)
 	if err != nil {
 		return err
 	}
@@ -53,6 +63,15 @@ func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupR
 	}
 	return nil
 }
+func (s *GroupService) GetUserGroupsWithLatestMessage(ctx context.Context, userID, memberCount int32) ([]*types.GroupWithMessage, error) {
+	// Lấy dữ liệu từ store
+	listGroupsWithMessages, err := s.groupStore.GetUserGroupsByFilter(userID, memberCount)
+	if err != nil {
+		return nil, err
+	}
+	return listGroupsWithMessages, nil
+}
+
 func (s *GroupService) DeleteGroup(ctx context.Context, req *groups.DeleteGroupRequest) error {
 	_, err := s.groupStore.GetGroupByID(req.GroupID)
 	if err != nil {

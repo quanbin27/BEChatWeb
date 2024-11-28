@@ -11,6 +11,8 @@ service GroupService{
   rpc LeaveGroup(LeaveGroupRequest) returns (LeaveGroupResponse){}
   rpc GetListMember(GetListMemberRequest) returns (GetListMemberReponse){}
   rpc GetListUserGroup(GetListUserGroupRequest) returns (GetListUserGroupReponse){}
+  rpc GetUserGroupsWithLatestMessage(GetUserGroupsRequest) returns (GetUserGroupsResponse);
+
 }
 message Member{
   int32 UserID = 1;
@@ -91,4 +93,19 @@ message GetListUserGroupRequest {
 }
 message GetListUserGroupReponse {
  repeated Group Groups = 1;
+}
+message GetUserGroupsRequest {
+ int32 user_id = 1;
+  int32 member_count = 2;
+}
+
+message GroupWithMessage {
+ int32 group_id = 1;
+ string group_name = 2;
+ string latest_message = 3;
+ string latest_message_time = 4;
+}
+
+message GetUserGroupsResponse {
+ repeated GroupWithMessage groups = 1;
 }

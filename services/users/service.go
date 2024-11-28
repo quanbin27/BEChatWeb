@@ -86,3 +86,10 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*types.
 	}
 	return user, nil
 }
+func (s *UserService) UpdateAvatar(ctx context.Context, userID int32, avatar string) (string, error) {
+	err := s.userStore.UpdateAvatar(userID, avatar)
+	if err != nil {
+		return "", err
+	}
+	return "Avatar updated successfully", nil
+}
