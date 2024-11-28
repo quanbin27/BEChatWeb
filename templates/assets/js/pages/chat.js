@@ -40,10 +40,13 @@ class Chat{
         this.favouriteUsers= document.querySelector('#favourite-users');
         this.favouriteGroups = document.querySelector('#favourite-groups');
 
+        this.userName = document.querySelector('.user-profile-show');
         this.avatar = document.querySelector('.avatar-sm');
         this.profileDetail = document.querySelector('.user-profile-sidebar');
         this.profileAvatar = this.profileDetail.querySelector('.profile-img');
-        this.userName = document.querySelector('.user-profile-show');
+        this.profileUsername = this.profileDetail.querySelector('.user-name.mb-1.text-truncate');
+        this.profileUsername1 = this.profileDetail.querySelector('.user-name.font-size-14.text-truncate');
+        console.log(this.profileUsername1)
 
         this.current_conversation = [];
         this.current_conversation_id = null;
@@ -160,6 +163,7 @@ class Chat{
                 for(let gr of groups.groups){
                     const otherUserId = gr.other_user_id;
                     const otherUserInfo = await this.store.contact.getContactInfo(otherUserId);
+                    gr.username = otherUserInfo.Name;
                     gr.image_path = otherUserInfo.avatar;
                 }
                 return groups.groups;
@@ -243,11 +247,38 @@ class Chat{
             }}
         this.selectedUser(userData);
     }
+    async deleteMessage(messageId){
+        let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+        return fetch('/api/v1/message',{
+            method:'DELETE',
+            headers:{
+                'content-type':'application/json',
+                'authorization':`Bearer ${token}`
+            },
+            body:JSON.stringify({
+                "message_id": messageId
+            })
+        })
+        .then( async response =>{
+            if(response.ok){
+                const message = await response.json();
+                return 'success';
+            }
+            else return 'error';
+        }).catch(()=>{return 'error';})
+    }
     renderConversation(current_conversation){
-        console.log(current_conversation)
+        // console.log(current_conversation)
         this.userConversation.innerHTML = ''
         for(let messageData of current_conversation){
             const message = this.messageElement(messageData);
+            const btnDelete = message.querySelector('.delete-item');
+            btnDelete.onclick =async ()=>{
+                const messageResponse = await this.deleteMessage(messageData.ID);
+                if(messageResponse==='success'){
+                    this.userConversation.removeChild(message);
+                }
+            }
             this.userConversation.appendChild(message);
         }
     }
@@ -277,7 +308,7 @@ class Chat{
                 <div style='display:flex; gap:10px; margin-left:10px; align-items:center  '>
                     <img src = ${userData.image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
                     <div style = 'display:flex; flex-direction:column'>
-                        <span style= 'font-size: medium; font-weight:600;' class = 'username'>${userData.group_name}</span>
+                        <span style= 'font-size: medium; font-weight:600;' class = 'username'>${userData.username}</span>
                         <span >${userData.message}</span>
                     </div>
                 </div>
@@ -298,10 +329,12 @@ class Chat{
             user = this.favouriteGroups.querySelector(`li[data-chat-id="${userData.group_id}"]`);
         if(user == null) alert('lỗi ở select chat');
        
-
-        this.userName.textContent = userData.name;
-        this.profileAvatar.src = userData.image_path;
+        console.log(userData)
         this.avatar.src = userData.image_path;
+        this.userName.textContent = userData.username;
+        this.profileUsername.textContent = userData.username;
+        this.profileUsername1.textContent = userData.username;
+        this.profileAvatar.src = userData.image_path;
         const currentConversationId = userData.group_id;
         this.current_conversation = await this.getCurrentConversationById(currentConversationId);
         this.renderConversation(this.current_conversation);
@@ -323,6 +356,7 @@ class Chat{
     }
 
     renderFavouriteGroups(favouriteGroupData){
+        console.log(favouriteGroupData);
         this.favouriteGroups.innerHTML = '';
         let image_path = 'assets/images/group.jpg';
         for(let groupData of favouriteGroupData){
@@ -340,8 +374,8 @@ class Chat{
                 <div style='display:flex; gap:10px; margin-left:10px; align-items:center  '>
                     <img src = ${groupData.image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
                     <div style = 'display:flex; flex-direction:column'>
-                        <span style= 'font-size: medium; font-weight:600;' class = 'groupname'>${groupData.name}</span>
-                        <span >${groupData.message}</span>
+                        <span style= 'font-size: medium; font-weight:600;' class = 'groupname'>${groupData.group_name}</span>
+                        <span >${groupData.latest_message}</span>
                     </div>
                 </div>
             `
@@ -353,7 +387,58 @@ class Chat{
 
         }
     }
+    async getContactInGroup(groupId){
+        let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
+        
+        const result = fetch(`/api/v1/group/${groupId}/member`,{
+            method:'GET',
+            headers:{
+                'authorization':`Bearer ${token}`
+            }
+        }).then(async response => {
+            console.log(response);
+            if(!response.ok){
+                return [];
+            }
+            const responseJson = await response.json();
+
+            console.log(responseJson)
+            if(Object.keys(responseJson).length == 0)return [];
+            return responseJson.Members;
+        }).catch(()=>{
+            return [];
+        })
+        return result;
+    }
     async selectedChat(chatData){
+
+        function createLi(member){
+            let li = document.createElement('li');
+            li.style.display = 'flex';
+            li.style.alignItems='center';
+            li.style.justifyContent = 'space-between';
+            li.innerHTML = `
+                <div>
+                    <p style = 'margin:0'>${member.Name}</p>
+                    <p style = 'margin:0'>${member.RoleID ==1?'admin':''}</p>
+                </div>
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <div class="dropdown">
+                            <button class="btn nav-btn text-black dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class='bx bx-dots-vertical-rounded'></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <a class="btn-delete dropdown-item d-flex justify-content-between align-items-center" href="#">Delete <i class="bx bx-trash text-muted"></i></a>
+                                <a class="btn-role dropdown-item d-flex justify-content-between align-items-center" href="#">Switch admin<i class="bx bxs-pencil text-muted"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+            return li;
+        }
+
         this.store.group.current_group_id = chatData.group_id;
 
         let chat = this.favouriteUsers.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
@@ -361,12 +446,40 @@ class Chat{
             chat = this.favouriteGroups.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
         if(chat == null) alert('lỗi ở select chat');
 
-        this.userName.textContent = chatData.name;
+        this.userName.textContent = chatData.group_name;
+        this.profileUsername.textContent = chatData.group_name;
+        this.profileUsername1.textContent = chatData.group_name;
         this.profileAvatar.src = chatData.image_path;
         this.avatar.src = chatData.image_path;
-
+        const ul = this.profileDetail.querySelector('.list-group-members');
+        ul.innerHTML = ''
         const currentConversationId = chatData.group_id;
-
+        const members = await this.getContactInGroup(currentConversationId);
+        let role = 'member';
+        const admin = members.find(member=>member.RoleID ==1)
+        if(admin.UserID == this.store.profile.user_id){
+            role = 'admin';
+        } 
+        for(let member of members){
+            let li = createLi(member);
+            const btnWrapper = li.querySelector('.d-flex');
+            const temp = btnWrapper.querySelector('.dropdown-menu.dropdown-menu-end')
+            const btnRole = temp.querySelector('.btn-role');
+            const btnDelete = temp.querySelector('.btn-delete');
+            if(role === 'member'){
+                if(member.UserID==this.store.profile.user_id){
+                    temp.removeChild(btnRole);
+                }
+                else
+                    li.removeChild(btnWrapper);
+            }
+            else{
+                if(member.UserID==this.store.profile.user_id){
+                    li.removeChild(btnWrapper);
+                }
+            }
+            ul.appendChild(li);
+        }
         this.current_conversation = await this.getCurrentConversationById(currentConversationId);
         this.renderConversation(this.current_conversation);
         let currentChat = this.favouriteUsers.querySelector('li.current');
@@ -497,7 +610,10 @@ class Group{
           
             if(message === 'success'){
                 //tạm
-                alert('thanh cong')
+                // alert('thanh cong')
+                const favouriteGroupData = await this.store.chat.getFavouriteGroups();
+                this.store.chat.renderFavouriteGroups(favouriteGroupData);
+                this.closeForm();
             }
         }
     }
@@ -767,7 +883,7 @@ class Contact{
         return this.getContacts();//tạm
     }
 // ============================================================Render contacts================================
-    renderContacts(contacts){
+    async renderContacts(contacts){
         function deleteContact(contact){
             const data = {
                 contact_user_id: contact.user_id,
@@ -791,12 +907,14 @@ class Contact{
                 }
             )
         }
-      
+        console.log(contacts);
         this.contactDiv.innerHTML = ''
         const ul = document.createElement('ul');
         ul.className = 'list-unstyled';
         let image_path = 'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg';
         for(let contact of contacts){
+            const contactInfo = await this.getContactInfo(contact.user_id)
+            image_path = contactInfo.avatar;//tạm gọi api phải có luôn avatar
             const li = document.createElement('li');
             li.className = 'contact';
             li.innerHTML = `
@@ -964,7 +1082,7 @@ class Contact{
 class Profile{
     constructor(store){
         this.store = store;
-        this.user_id = 2;//tạm
+        this.user_id = null;//tạm
     }
     async init(){
         await this.getProfile();
@@ -980,7 +1098,12 @@ class Profile{
         }).then(async response=>{
             console.log(response)
             if(response.ok){
-                console.log(await response.json())
+                const userInfo = await response.json()
+                this.user_id = userInfo.ID;
+            }
+            else{
+                //yeu cau dang nhap
+                window.location.href = '/login';
             }
         })
     }
