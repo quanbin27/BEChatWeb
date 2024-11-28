@@ -32,7 +32,8 @@ type GroupStore interface {
 	GetRoleIDByUserAndGroup(userID, groupID int32) (int32, error)
 	GetListMembers(groupID int32) ([]Member, error)
 	ChangeAdmin(groupID int32, currentAdminID int32, newAdminID int32) error
-	GetUserGroupsByFilter(userID int32, memberCount int32) ([]*GroupWithMessage, error)
+	GetUserGroupsWithTwoMembers(userID int32) ([]*GroupWithMessage, error)
+	GetUserGroupsWithMoreThanTwoMembers(userID int32) ([]*GroupWithMessage, error)
 }
 type MessageStore interface {
 	SendMessage(msg *Message) (int32, time.Time, error)
@@ -199,6 +200,7 @@ type GroupWithMessage struct {
 	GroupName         string `json:"group_name"`
 	LatestMessage     string `json:"latest_message"`
 	LatestMessageTime string `json:"latest_message_time"`
+	OtherUserID       int32  `json:"other_user_id"`
 }
 
 // ------ CONTACT-------

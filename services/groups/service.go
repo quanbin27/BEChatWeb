@@ -64,12 +64,20 @@ func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupR
 	return nil
 }
 func (s *GroupService) GetUserGroupsWithLatestMessage(ctx context.Context, userID, memberCount int32) ([]*types.GroupWithMessage, error) {
-	// Lấy dữ liệu từ store
-	listGroupsWithMessages, err := s.groupStore.GetUserGroupsByFilter(userID, memberCount)
+	if memberCount == 2 {
+		listGroupsWithMessages, err := s.groupStore.GetUserGroupsWithTwoMembers(userID)
+
+		if err != nil {
+			return nil, err
+		}
+		return listGroupsWithMessages, nil
+	}
+	listGroupsWithMessages, err := s.groupStore.GetUserGroupsWithMoreThanTwoMembers(userID)
 	if err != nil {
 		return nil, err
 	}
 	return listGroupsWithMessages, nil
+
 }
 
 func (s *GroupService) DeleteGroup(ctx context.Context, req *groups.DeleteGroupRequest) error {
