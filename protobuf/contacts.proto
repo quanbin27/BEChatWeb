@@ -14,7 +14,8 @@ service ContactService {
 message Contact {
   int32 user_id = 1;
   string username = 2;
-  string email = 3; // PENDING, ACCEPTED,REJECTED
+  string email = 3;
+  string avatar=4;// PENDING, ACCEPTED,REJECTED
 }
 
 message AddContactRequest {
