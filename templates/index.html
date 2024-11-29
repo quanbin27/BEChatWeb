@@ -30,6 +30,15 @@
     <!-- Custom Css-->
     <link href="assets/css/custom.css" id="custom-style" rel="stylesheet" type="text/css" />
 
+    <!-- Thêm thư viện SweetAlert2
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script> -->
+
+    <!-- Thêm thư viện Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
 
 </head>
 
@@ -85,7 +94,7 @@
                 </li>
                 <li class="nav-item dropdown profile-user-dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <img src="assets/images/users/avatar-1.jpg" alt="" class="profile-user rounded-circle">
+                        <img src="assets/images/users/user-dummy-img.jpg" alt="" class="profile-user rounded-circle">
                     </a>
                     <div class="dropdown-menu">
                         <a class="dropdown-item d-flex align-items-center justify-content-between" id="pills-user-tab" data-bs-toggle="pill" href="#pills-user" role="tab">Profile <i class="bx bx-user-circle text-muted ms-1"></i></a>
@@ -140,16 +149,16 @@
 
                     <div class="text-center p-3 p-lg-4 border-bottom pt-2 pt-lg-2 mt-n5 position-relative">
                         <div class="mb-lg-3 mb-2">
-                            <img src="assets/images/users/avatar-1.jpg" class="rounded-circle avatar-lg img-thumbnail" alt="">
+                            <img src="assets/images/users/user-dummy-img.jpg" class="rounded-circle avatar-lg img-thumbnail" alt="">
                         </div>
 
-                        <h5 class="font-size-16 mb-1 text-truncate">Adam Zampa</h5>
+                        <h5 class="font-size-16 mb-1 text-truncate">Loading</h5>
                         <!-- <p class="text-muted font-size-14 text-truncate mb-0">Front end Developer</p> -->
                     </div>
                     <!-- End profile user -->
 
                     <!-- Start user-profile-desc -->
-                    <!-- <div class="p-4 profile-desc" data-simplebar>
+                    <div class="p-4 profile-desc" data-simplebar>
                         <div class="text-muted">
                             <p class="mb-4">If several languages coalesce, the grammar of the resulting language is more simple.</p>
                         </div>
@@ -160,7 +169,7 @@
                                     <i class="bx bx-user align-middle text-muted"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <p class="mb-0">Adam Zampa</p>
+                                    <p class="mb-0 detail-username">Loading</p>
                                 </div>
                             </div>
 
@@ -169,7 +178,7 @@
                                     <i class="bx bx-message-rounded-dots align-middle text-muted"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <p class="mb-0">adc@123.com</p>
+                                    <p class="mb-0 detail-email">Loading</p>
                                 </div>
                             </div>
 
@@ -178,192 +187,12 @@
                                     <i class="bx bx-location-plus align-middle text-muted"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <p class="mb-0">California, USA</p>
+                                    <p class="mb-0">VietNam</p>
                                 </div>
                             </div>
                         </div>
                         <hr class="my-4">
-
-                        <div>
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <h5 class="font-size-11 text-muted text-uppercase">Media</h5>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <a href="#" class="font-size-12 d-block mb-2">Show all</a>
-                                </div>
-                            </div>
-                            <div class="profile-media-img">
-                                <div class="media-img-list">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-1.jpg" alt="media img" class="img-fluid">
-                                    </a>
-                                </div>
-                                <div class="media-img-list">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-2.jpg" alt="media img" class="img-fluid">
-                                    </a>
-                                </div>
-                                <div class="media-img-list">
-                                    <a href="#">
-                                        <img src="assets/images/small/img-4.jpg" alt="media img" class="img-fluid">
-                                        <div class="bg-overlay">+ 15</div>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <div>
-                            <div>
-                                <h5 class="font-size-11 text-muted text-uppercase mb-3">Attached Files</h5>
-                            </div>
-
-                            <div>
-                                <div class="card p-2 border mb-2 bg-transparent">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 avatar-xs ms-1 me-3">
-                                            <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
-                                                <i class="bx bx-file"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h5 class="font-size-14 text-truncate mb-1">design-phase-1-approved.pdf</h5>
-                                            <p class="text-muted font-size-13 mb-0">12.5 MB</p>
-                                        </div>
-
-                                        <div class="flex-shrink-0 ms-3">
-                                            <div class="d-flex gap-2">
-                                                <div>
-                                                    <a href="#" class="text-muted px-1">
-                                                        <i class="bx bxs-download"></i>
-                                                    </a>
-                                                </div>
-                                                <div class="dropdown">
-                                                    <a class="dropdown-toggle text-muted px-1" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="bx bx-dots-horizontal-rounded"></i>
-                                                    </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="card p-2 border mb-2 bg-transparent">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 avatar-xs ms-1 me-3">
-                                            <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
-                                                <i class="bx bx-image"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h5 class="font-size-14 text-truncate mb-1">Image-1.jpg</h5>
-                                            <p class="text-muted font-size-13 mb-0">4.2 MB</p>
-                                        </div>
-
-                                        <div class="flex-shrink-0 ms-3">
-                                            <div class="d-flex gap-2">
-                                                <div>
-                                                    <a href="#" class="text-muted px-1">
-                                                        <i class="bx bxs-download"></i>
-                                                    </a>
-                                                </div>
-                                                <div class="dropdown">
-                                                    <a class="dropdown-toggle text-muted px-1" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="bx bx-dots-horizontal-rounded"></i>
-                                                    </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="card p-2 border mb-2 bg-transparent">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 avatar-xs ms-1 me-3">
-                                            <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
-                                                <i class="bx bx-image"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h5 class="font-size-14 text-truncate mb-1">Image-2.jpg</h5>
-                                            <p class="text-muted font-size-13 mb-0">3.1 MB</p>
-                                        </div>
-
-                                        <div class="flex-shrink-0 ms-3">
-                                            <div class="d-flex gap-2">
-                                                <div>
-                                                    <a href="#" class="text-muted px-1">
-                                                        <i class="bx bxs-download"></i>
-                                                    </a>
-                                                </div>
-                                                <div class="dropdown">
-                                                    <a class="dropdown-toggle text-muted px-1" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="bx bx-dots-horizontal-rounded"></i>
-                                                    </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="card p-2 border mb-2 bg-transparent">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0 avatar-xs ms-1 me-3">
-                                            <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
-                                                <i class="bx bx-file"></i>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 overflow-hidden">
-                                            <h5 class="font-size-14 text-truncate mb-1">Landing-A.zip</h5>
-                                            <p class="text-muted font-size-13 mb-0">6.7 MB</p>
-                                        </div>
-
-                                        <div class="flex-shrink-0 ms-3">
-                                            <div class="d-flex gap-2">
-                                                <div>
-                                                    <a href="#" class="text-muted px-1">
-                                                        <i class="bx bxs-download"></i>
-                                                    </a>
-                                                </div>
-                                                <div class="dropdown">
-                                                    <a class="dropdown-toggle text-muted px-1" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        <i class="bx bx-dots-horizontal-rounded"></i>
-                                                    </a>
-                                                    <div class="dropdown-menu dropdown-menu-end">
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Share <i class="bx bx-share-alt ms-2 text-muted"></i></a>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Bookmark <i class="bx bx-bookmarks text-muted ms-2"></i></a>
-                                                        <div class="dropdown-divider"></div>
-                                                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">Delete <i class="bx bx-trash ms-2 text-muted"></i></a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div> -->
+                    </div>
                     <!-- end user-profile-desc -->
                 </div>
                 <!-- End profile content -->
@@ -509,7 +338,7 @@
                             </div>
                             <div class="flex-shrink-0">
                                 <div data-bs-toggle="tooltip"  data-bs-trigger="hover" data-bs-placement="bottom" title="Pending Contacts">
-                                    <button class = 'pending-contact' id = 'btn-pending-contacts'>
+                                    <button style="border: none;" class = 'pending-contact' id = 'btn-pending-contacts'>
                                         <svg width="20px" height="20px" viewBox="0 0 17 17" xmlns="http://www.w3.org/2000/svg">
                                             <g id="add-group-16px" transform="translate(0.5 0.5)">
                                                 <path id="Subtração_4" data-name="Subtração 4" d="M-14,16h-4.5A1.5,1.5,0,0,1-20,14.5,3.5,3.5,0,0,1-16.5,11H-14a3,3,0,0,1-3-3h-3.5A1.5,1.5,0,0,1-22,6.5,2.5,2.5,0,0,1-19.5,4H-18a2,2,0,0,1-2-2,2,2,0,0,1,2-2,2,2,0,0,1,2,2,2,2,0,0,1-2,2h1.5a2.508,2.508,0,0,1,2.027,1.048A2.909,2.909,0,0,1-14,5a2.924,2.924,0,0,1,.473.048A2.506,2.506,0,0,1-11.5,4H-10a2,2,0,0,1-2-2,2,2,0,0,1,2-2A2,2,0,0,1-8,2a2,2,0,0,1-2,2h1.5A2.5,2.5,0,0,1-6,6.5,1.5,1.5,0,0,1-7.5,8H-11v.043l0,.057h-1c0-.03,0-.061,0-.1a2,2,0,0,0-2-2,2,2,0,0,0-2,2,2,2,0,0,0,2,2v2h-2.5A2.5,2.5,0,0,0-19,14.5a.5.5,0,0,0,.5.5H-14v1Zm2.5-11a1.492,1.492,0,0,0-1.02.406A3,3,0,0,1-11.184,7H-7.5A.5.5,0,0,0-7,6.5,1.5,1.5,0,0,0-8.5,5Zm-8,0A1.5,1.5,0,0,0-21,6.5a.5.5,0,0,0,.5.5h3.685A2.993,2.993,0,0,1-15.48,5.406,1.492,1.492,0,0,0-16.5,5ZM-10,1a1,1,0,0,0-1,1,1,1,0,0,0,1,1A1,1,0,0,0-9,2,1,1,0,0,0-10,1Zm-8,0a1,1,0,0,0-1,1,1,1,0,0,0,1,1,1,1,0,0,0,1-1A1,1,0,0,0-18,1Z" transform="translate(22)" stroke="rgba(0,0,0,0)" stroke-miterlimit="10" stroke-width="1"></path>
@@ -581,7 +410,7 @@
 
                     <div class="text-center p-3 p-lg-4 border-bottom pt-2 pt-lg-2 mt-n5 position-relative">
                         <div class="mb-3 profile-user">
-                            <img src="assets/images/users/avatar-1.jpg" class="rounded-circle avatar-lg img-thumbnail user-profile-image" alt="user-profile-image">
+                            <img src="assets/images/users/user-dummy-img.jpg" class="rounded-circle avatar-lg img-thumbnail user-profile-image" alt="user-profile-image">
                             <div class="avatar-xs p-0 rounded-circle profile-photo-edit">
                                 <input id="profile-img-file-input" type="file" class="profile-img-file-input" >
                                 <label for="profile-img-file-input" class="profile-photo-edit avatar-xs">
@@ -627,17 +456,17 @@
 
                                         <div>
                                             <p class="text-muted mb-1">Name</p>
-                                            <h5 class="font-size-14">Adam Zampa</h5>
+                                            <h5 class="font-size-14 setting-name">Loading</h5>
                                         </div>
 
                                         <div class="mt-4">
                                             <p class="text-muted mb-1">Email</p>
-                                            <h5 class="font-size-14">adc@123.com</h5>
+                                            <h5 class="font-size-14 setting-email">Loading</h5>
                                         </div>
 
                                         <div class="mt-4">
                                             <p class="text-muted mb-1">Location</p>
-                                            <h5 class="font-size-14 mb-0">California, USA</h5>
+                                            <h5 class="font-size-14 mb-0">VietNam</h5>
                                         </div>
                                     </div>
                                 </div>
@@ -939,7 +768,7 @@
                                                 <span class="user-status"></span>
                                             </div>
                                             <div class="flex-grow-1 overflow-hidden">
-                                                <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset">Loading</a></h6>
+                                                <h6 class="text-truncate mb-0 font-size-18"><a href="#" class="user-profile-show text-reset">DEFAULT CHAT</a></h6>
                                                 <p class="text-truncate text-muted mb-0"><small>Online</small></p>
                                             </div>
                                         </div>
@@ -960,7 +789,7 @@
                                             </div>
                                         </div>
                                     </li>
-                                    <li class="list-inline-item add-more-contact" title="Thêm thành viên">
+                                    <li class="list-inline-item add-more-contact" style="display: none;" title="Add more contacts">
                                         <svg width="20px" height="20px" viewBox="0 0 17 17" xmlns="http://www.w3.org/2000/svg">
                                             <g id="add-group-16px" transform="translate(0.5 0.5)">
                                                 <path id="Subtração_4" data-name="Subtração 4" d="M-14,16h-4.5A1.5,1.5,0,0,1-20,14.5,3.5,3.5,0,0,1-16.5,11H-14a3,3,0,0,1-3-3h-3.5A1.5,1.5,0,0,1-22,6.5,2.5,2.5,0,0,1-19.5,4H-18a2,2,0,0,1-2-2,2,2,0,0,1,2-2,2,2,0,0,1,2,2,2,2,0,0,1-2,2h1.5a2.508,2.508,0,0,1,2.027,1.048A2.909,2.909,0,0,1-14,5a2.924,2.924,0,0,1,.473.048A2.506,2.506,0,0,1-11.5,4H-10a2,2,0,0,1-2-2,2,2,0,0,1,2-2A2,2,0,0,1-8,2a2,2,0,0,1-2,2h1.5A2.5,2.5,0,0,1-6,6.5,1.5,1.5,0,0,1-7.5,8H-11v.043l0,.057h-1c0-.03,0-.061,0-.1a2,2,0,0,0-2-2,2,2,0,0,0-2,2,2,2,0,0,0,2,2v2h-2.5A2.5,2.5,0,0,0-19,14.5a.5.5,0,0,0,.5.5H-14v1Zm2.5-11a1.492,1.492,0,0,0-1.02.406A3,3,0,0,1-11.184,7H-7.5A.5.5,0,0,0-7,6.5,1.5,1.5,0,0,0-8.5,5Zm-8,0A1.5,1.5,0,0,0-21,6.5a.5.5,0,0,0,.5.5h3.685A2.993,2.993,0,0,1-15.48,5.406,1.492,1.492,0,0,0-16.5,5ZM-10,1a1,1,0,0,0-1,1,1,1,0,0,0,1,1A1,1,0,0,0-9,2,1,1,0,0,0-10,1Zm-8,0a1,1,0,0,0-1,1,1,1,0,0,0,1,1,1,1,0,0,0,1-1A1,1,0,0,0-18,1Z" transform="translate(22)" stroke="rgba(0,0,0,0)" stroke-miterlimit="10" stroke-width="1"/>
@@ -1279,7 +1108,7 @@
 
                 <div class="p-3 border-bottom">
                     <div class="user-profile-img">
-                        <img src="assets/images/users/avatar-2.jpg" class="profile-img rounded" alt="">
+                        <img src="assets/images/users/user-dummy-img.jpg" class="profile-img rounded" alt="">
                         <div class="overlay-content rounded">
                             <div class="user-chat-nav p-2">
                                 <div class="d-flex w-100">
@@ -1379,7 +1208,7 @@
                         </form>
                         <div class="contact-info">
                             <p>Kết quả tìm kiếm</p>
-
+                            <p class="message"></p>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1398,7 +1227,7 @@
                     <div class="modal-body p-0">
                         <div class="text-center p-4 pb-0">
                             <div class="avatar-xl mx-auto mb-4">
-                                <img src="assets/images/users/avatar-2.jpg" alt="" class="img-thumbnail rounded-circle">
+                                <img src="assets/images/users/user-dummy-img.jpg" alt="" class="img-thumbnail rounded-circle">
                             </div>
 
                             <div class="d-flex justify-content-center align-items-center mt-4">
@@ -1453,7 +1282,7 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content shadow-lg border-0">
                     <div class="modal-body p-0">
-                        <img src="assets/images/users/avatar-2.jpg" alt="" class="videocallModal-bg">
+                        <img src="assets/images/users/user-dummy-img.jpg" alt="" class="videocallModal-bg">
                         <div class="position-absolute start-0 end-0 bottom-0">
                             <div class="text-center">
                                 <div class="d-flex justify-content-center align-items-center text-center">
@@ -2342,7 +2171,7 @@
                         <div class="contact-modal-list mx-n4 px-1" data-simplebar style="max-height: 200px;">
                             <div class="mt-3">
                                 <div class="contact-list-title">
-                                    Tìm
+                                    Add more contacts
                                 </div>
 
                                 <ul class="list-unstyled unjoin-contacts" >
