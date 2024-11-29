@@ -34,6 +34,7 @@ type GroupStore interface {
 	ChangeAdmin(groupID int32, currentAdminID int32, newAdminID int32) error
 	GetUserGroupsWithTwoMembers(userID int32) ([]*GroupWithMessage, error)
 	GetUserGroupsWithMoreThanTwoMembers(userID int32) ([]*GroupWithMessage, error)
+	CheckGroupExists(userID1, userID2 int32) (bool, error)
 }
 type MessageStore interface {
 	SendMessage(msg *Message) (int32, time.Time, error)

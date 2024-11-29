@@ -185,3 +185,29 @@ func (s *GroupStore) GetUserGroupsWithMoreThanTwoMembers(userID int32) ([]*types
 
 	return groupsWithMessages, nil
 }
+func (s *GroupStore) CheckGroupExists(userID1, userID2 int32) (bool, error) {
+	var count int64
+
+	query := `
+		SELECT 
+			COUNT(1) 
+		FROM 
+			` + "`groups`" + ` g
+		JOIN 
+			group_details gd1 ON g.id = gd1.group_id
+		JOIN 
+			group_details gd2 ON g.id = gd2.group_id
+		WHERE 
+			g.member_count = 2 AND 
+			gd1.user_id = ? AND 
+			gd2.user_id = ?
+	`
+
+	// Sử dụng GORM để thực thi truy vấn
+	err := s.db.Raw(query, userID1, userID2).Scan(&count).Error
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}

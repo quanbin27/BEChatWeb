@@ -52,6 +52,13 @@ func (s *ContactService) AcceptContact(ctx context.Context, req *contacts.Accept
 	if err != nil {
 		return errors.New("failed to accept contact: " + err.Error())
 	}
+	exists, err := s.groupStore.CheckGroupExists(req.UserId, req.ContactUserId)
+	if err != nil {
+		return errors.New("failed to check group existence: " + err.Error())
+	}
+	if exists {
+		return nil
+	}
 	userName1, err1 := s.userStore.GetNameByID(req.UserId)
 	userName2, err2 := s.userStore.GetNameByID(req.ContactUserId)
 	if err1 != nil || err2 != nil {
@@ -62,7 +69,7 @@ func (s *ContactService) AcceptContact(ctx context.Context, req *contacts.Accept
 		MemberCount: 2,
 		CreatedAt:   time.Now(),
 	}
-	print(group.Name)
+
 	groupID, err := s.groupStore.CreateGroup(group)
 	if err != nil {
 		return errors.New("failed to create group: " + err.Error())
