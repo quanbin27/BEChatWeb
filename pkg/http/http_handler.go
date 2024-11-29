@@ -491,6 +491,7 @@ func (h *HttpHandler) SendMessageHandler(c echo.Context) error {
 		"group_id": payload.GroupID,
 		"user_id":  userID,
 		"content":  payload.Content,
+		"func":     "sendMessage",
 	}
 	messageBytes, err := json.Marshal(messageData)
 	h.hub.SendMessage(messageBytes)
@@ -522,6 +523,13 @@ func (h *HttpHandler) DeleteMessageHandler(c echo.Context) error {
 		UserID:    userID,
 		MessageID: payload.MessageID,
 	})
+	messageData := map[string]interface{}{
+		"group_id": payload.MessageID,
+		"user_id":  userID,
+		"func":     "deleteMessage",
+	}
+	messageBytes, err := json.Marshal(messageData)
+	h.hub.SendMessage(messageBytes)
 	if err != nil {
 		if err.Error() == "rpc error: code = PermissionDenied desc = User is not authorized to delete this message" {
 			return c.JSON(http.StatusForbidden, map[string]string{"error": "You do not have permission to delete this message"})
