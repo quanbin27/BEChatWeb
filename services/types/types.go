@@ -41,7 +41,7 @@ type MessageStore interface {
 	GetMessages(groupID int32) ([]Message, error)
 	GetLatestMessages(groupID int32) (Message, error)
 	GetMessageByID(messageID int32, msg *Message) error
-	DeleteMessage(msg *Message) error
+	DeleteMessage(msg *Message) (int32, error)
 }
 type ContactStore interface {
 	GetContacts(userID int32) ([]Contact, error)
@@ -64,7 +64,7 @@ type UserService interface {
 	UpdateAvatar(ctx context.Context, userID int32, avatar string) (string, error)
 }
 type GroupService interface {
-	CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) error
+	CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) (int32, error)
 	DeleteGroup(ctx context.Context, req *groups.DeleteGroupRequest) error
 	ChangeNameGroup(ctx context.Context, req *groups.ChangeNameRequest) (string, error)
 	GetGroupInfo(ctx context.Context, id int32) (*Group, error)
@@ -77,7 +77,7 @@ type GroupService interface {
 	GetListUserGroups(ctx context.Context, userID int32) ([]Group, error)
 }
 type MessageService interface {
-	DeleteMessage(ctx context.Context, req *messages.DeleteMessageRequest) error
+	DeleteMessage(ctx context.Context, req *messages.DeleteMessageRequest) (int32, error)
 	GetLatestMessages(ctx context.Context, req *messages.GetLatestMessagesRequest) (Message, error)
 	GetMessages(ctx context.Context, req *messages.GetMessagesRequest) ([]Message, error)
 	SendMessage(ctx context.Context, req *messages.SendMessageRequest) (int32, time.Time, error)

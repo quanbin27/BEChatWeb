@@ -21,13 +21,13 @@ func NewGrpcGroupsHandler(grpc *grpc.Server, groupService types.GroupService) {
 	groups.RegisterGroupServiceServer(grpc, grpcHandler)
 }
 func (h *GroupsGrpcHandler) CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) (*groups.CreateGroupResponse, error) {
-	err := h.groupService.CreateGroup(ctx, req)
+	groupId, err := h.groupService.CreateGroup(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	return &groups.CreateGroupResponse{
-		//
-		Status: "success",
+		GroupID: groupId,
+		Status:  "success",
 	}, nil
 }
 func (h *GroupsGrpcHandler) DeleteGroup(ctx context.Context, req *groups.DeleteGroupRequest) (*groups.DeleteGroupResponse, error) {

@@ -85,13 +85,14 @@ func (h *MessageGrpcHandler) GetLatestMessages(ctx context.Context, req *message
 }
 func (h *MessageGrpcHandler) DeleteMessage(ctx context.Context, req *messages.DeleteMessageRequest) (*messages.DeleteMessageResponse, error) {
 	// Gọi service DeleteMessage
-	err := h.messageService.DeleteMessage(ctx, req)
+	groupID, err := h.messageService.DeleteMessage(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete message: %v", err)
 	}
 
 	// Trả về phản hồi gRPC
 	return &messages.DeleteMessageResponse{
-		Status: "Message deleted successfully",
+		Status:  "Message deleted successfully",
+		GroupID: groupID,
 	}, nil
 }

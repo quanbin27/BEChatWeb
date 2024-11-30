@@ -92,15 +92,15 @@ func (s *MessageService) GetLatestMessages(ctx context.Context, req *messages.Ge
 	return message, nil
 }
 
-func (s *MessageService) DeleteMessage(ctx context.Context, req *messages.DeleteMessageRequest) error {
+func (s *MessageService) DeleteMessage(ctx context.Context, req *messages.DeleteMessageRequest) (int32, error) {
 	var msg types.Message
 	if err := s.store.GetMessageByID(req.MessageID, &msg); err != nil {
-		return fmt.Errorf("failed to find message: %v", err)
+		return -1, fmt.Errorf("failed to find message: %v", err)
 	}
 
 	roleID, err := s.groupStore.GetRoleIDByUserAndGroup(req.UserID, msg.GroupID)
 	if err != nil {
-		return fmt.Errorf("failed to get user role: %v", err)
+		return -1, fmt.Errorf("failed to get user role: %v", err)
 	}
 
 	if roleID == 1 {
@@ -108,7 +108,7 @@ func (s *MessageService) DeleteMessage(ctx context.Context, req *messages.Delete
 	}
 
 	if msg.UserID != req.UserID {
-		return fmt.Errorf("user %d is not authorized to delete message %d", req.UserID, req.MessageID)
+		return -1, fmt.Errorf("user %d is not authorized to delete message %d", req.UserID, req.MessageID)
 	}
 
 	return s.store.DeleteMessage(&msg)

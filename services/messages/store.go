@@ -36,12 +36,13 @@ func (s *MessageStore) GetLatestMessages(groupID int32) (types.Message, error) {
 	}
 	return message, nil
 }
-func (s *MessageStore) DeleteMessage(msg *types.Message) error {
+func (s *MessageStore) DeleteMessage(msg *types.Message) (int32, error) {
 	// Xóa tin nhắn
+	groupID := msg.GroupID
 	if err := s.db.Delete(msg).Error; err != nil {
-		return fmt.Errorf("failed to delete message: %v", err)
+		return -1, fmt.Errorf("failed to delete message: %v", err)
 	}
-	return nil
+	return groupID, nil
 }
 func (s *MessageStore) GetMessageByID(messageID int32, msg *types.Message) error {
 	if err := s.db.First(msg, messageID).Error; err != nil {

@@ -42,7 +42,7 @@ type WebSocketClient struct {
 }
 type Message struct {
 	TargetUserID int32
-	Content      string
+	Content      []byte
 }
 type Hub struct {
 	clients       map[int32]*WebSocketClient
@@ -159,10 +159,38 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.GET("/ws", h.WebSocketHandler, auth.WithJWTAuth())
 
 }
-func (h *Hub) SendMessageToUser(targetUserID int32, content string) {
-	h.broadcast <- Message{
-		TargetUserID: targetUserID,
-		Content:      content,
+func (h *Hub) SendMessageToUser(targetUserID int32, content []byte) {
+	if client, exists := h.clients[targetUserID]; exists {
+		client.send <- content
+	} else {
+		log.Printf("User %d is not connected", targetUserID)
+	}
+}
+
+func (h *Hub) SendMessageToGroup(groupID int32, content []byte) {
+	if members, exists := h.groups[groupID]; exists {
+		for _, userID := range members {
+			h.SendMessageToUser(userID, content)
+		}
+	} else {
+		log.Printf("Group %d does not exist", groupID)
+	}
+}
+func (h *Hub) RemoveUserFromGroup(groupID, userID int32) {
+	// Kiểm tra nếu nhóm tồn tại
+	if members, exists := h.groups[groupID]; exists {
+		// Tìm vị trí của userID trong danh sách thành viên của nhóm
+		for i, member := range members {
+			if member == userID {
+				// Loại bỏ userID khỏi nhóm
+				h.groups[groupID] = append(members[:i], members[i+1:]...)
+				log.Printf("User %d removed from group %d", userID, groupID)
+				return
+			}
+		}
+		log.Printf("User %d is not a member of group %d", userID, groupID)
+	} else {
+		log.Printf("Group %d does not exist", groupID)
 	}
 }
 
@@ -448,7 +476,17 @@ func (h *HttpHandler) AcceptContactHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to accept contact: " + err.Error()})
 	}
+	messageData := map[string]interface{}{
+		"user_id": userID,
+		"func":    "acceptFriend",
+		"message": "Your friend request has been accepted",
+	}
+	messageBytes, err := json.Marshal(messageData)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
+	}
 
+	h.hub.SendMessageToUser(payload.ContactUserID, messageBytes)
 	return c.JSON(http.StatusOK, map[string]string{"message": "Contact accepted successfully"})
 }
 func (h *HttpHandler) GetContactsHandler(c echo.Context) error {
@@ -534,10 +572,11 @@ func (h *HttpHandler) SendMessageHandler(c echo.Context) error {
 		"func":     "sendMessage",
 	}
 	messageBytes, err := json.Marshal(messageData)
-	h.hub.SendMessage(messageBytes)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
 	}
+
+	h.hub.SendMessageToGroup(payload.GroupID, messageBytes)
 	return c.JSON(http.StatusOK, res)
 }
 func (h *HttpHandler) DeleteMessageHandler(c echo.Context) error {
@@ -559,24 +598,28 @@ func (h *HttpHandler) DeleteMessageHandler(c echo.Context) error {
 	defer cancel()
 
 	messageClient := messages.NewMessageServiceClient(h.grpcClient)
-	_, err := messageClient.DeleteMessage(ctx, &messages.DeleteMessageRequest{
+	res, err := messageClient.DeleteMessage(ctx, &messages.DeleteMessageRequest{
 		UserID:    userID,
 		MessageID: payload.MessageID,
 	})
-	messageData := map[string]interface{}{
-		"group_id": payload.MessageID,
-		"user_id":  userID,
-		"func":     "deleteMessage",
-	}
-	messageBytes, err := json.Marshal(messageData)
-	h.hub.SendMessage(messageBytes)
 	if err != nil {
 		if err.Error() == "rpc error: code = PermissionDenied desc = User is not authorized to delete this message" {
 			return c.JSON(http.StatusForbidden, map[string]string{"error": "You do not have permission to delete this message"})
 		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to delete message: " + err.Error()})
 	}
+	messageData := map[string]interface{}{
+		"message_id": payload.MessageID,
+		"group_id":   res.GroupID,
+		"func":       "deleteMessage",
+	}
+	messageBytes, err := json.Marshal(messageData)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
+	}
 
+	// Gửi thông báo đến nhóm
+	h.hub.SendMessageToGroup(res.GroupID, messageBytes)
 	return c.JSON(http.StatusOK, map[string]string{"message": "Message deleted successfully"})
 }
 
@@ -750,6 +793,19 @@ func (h *HttpHandler) KickMemberHandler(c echo.Context) error {
 			"error": fmt.Sprintf("Failed to kick member: %v", err),
 		})
 	}
+	h.hub.RemoveUserFromGroup(int32(groupID), payload.MemberID)
+
+	// Tạo thông báo gửi qua WebSocket
+	messageData := map[string]interface{}{
+		"group_id": int32(groupID),
+		"func":     "kickMember",
+		"user_id":  payload.MemberID,
+	}
+	messageBytes, err := json.Marshal(messageData)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
+	}
+	h.hub.SendMessageToUser(payload.MemberID, messageBytes)
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -780,6 +836,21 @@ func (h *HttpHandler) AddMemberHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
+	for _, userid := range payload.MemberIds {
+		h.hub.RegisterUserToGroup(int32(groupID), userid)
+	}
+	messageData := map[string]interface{}{
+		"group_id": int32(groupID),
+		"owner_id": userID,
+		"func":     "addMember",
+	}
+	messageBytes, err := json.Marshal(messageData)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
+	}
+
+	// Gửi thông báo đến nhóm
+	h.hub.SendMessageToGroup(int32(groupID), messageBytes)
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -855,6 +926,22 @@ func (h *HttpHandler) CreateGroupHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
+	for _, userid := range payload.MemberIds {
+		h.hub.RegisterUserToGroup(res.GroupID, userid)
+	}
+	messageData := map[string]interface{}{
+		"group_id":   res.GroupID,
+		"owner_id":   c.Get("user_id").(int32),
+		"group_name": payload.Name,
+		"func":       "createGroup",
+	}
+	messageBytes, err := json.Marshal(messageData)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})
+	}
+
+	// Gửi thông báo đến nhóm
+	h.hub.SendMessageToGroup(res.GroupID, messageBytes)
 	return c.JSON(http.StatusOK, res)
 }
 func (h *HttpHandler) ChangeInfo(c echo.Context) error {

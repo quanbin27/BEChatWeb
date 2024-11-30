@@ -39,6 +39,7 @@ message DeleteMessageRequest {
 }
 message DeleteMessageResponse {
   string Status = 1;
+  int32 GroupID=2;
 }
 message GetLatestMessagesRequest {
   int32 UserID = 1;
