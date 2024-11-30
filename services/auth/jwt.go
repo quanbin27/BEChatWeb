@@ -57,6 +57,39 @@ func WithJWTAuth() echo.MiddlewareFunc {
 		}
 	}
 }
+func WithSocketAuth() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// Lấy token từ header hoặc query
+			tokenString := c.Param("token")
+			if tokenString == "" {
+				return c.JSON(http.StatusUnauthorized, map[string]string{
+					"error": "unauthorized",
+				})
+			}
+
+			// Xác thực token
+			token, err := ValidateJWT(tokenString)
+			if err != nil {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+			}
+			if !token.Valid {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid token"})
+			}
+
+			// Lấy claims từ token
+			claims := token.Claims.(jwt.MapClaims)
+			userID, err := strconv.Atoi(claims["user_id"].(string))
+			if err != nil {
+				return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+			}
+
+			c.Set("user_id", int32(userID))
+
+			return next(c)
+		}
+	}
+}
 func GetUserIDFromContext(c echo.Context) (int32, error) {
 
 	user, ok := c.Get("user").(*types.User) // Giả sử types.User là kiểu dữ liệu của bạn

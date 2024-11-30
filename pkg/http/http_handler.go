@@ -156,8 +156,7 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.GET("/contact/pending-received", h.GetPendingReceivedContactsHandler, auth.WithJWTAuth())
 	e.POST("/contact/reject", h.RejectContactHandler, auth.WithJWTAuth())
 	e.GET("/contact/not-in-group/:group_id", h.GetContactsNotInGroupHandler, auth.WithJWTAuth())
-	e.GET("/ws", h.WebSocketHandler, auth.WithJWTAuth())
-
+	e.GET("/ws/:token", h.WebSocketHandler, auth.WithSocketAuth())
 }
 func (h *Hub) SendMessageToUser(targetUserID int32, content []byte) {
 	if client, exists := h.clients[targetUserID]; exists {
