@@ -19,9 +19,9 @@ type GroupService struct {
 func NewGroupService(groupStore types.GroupStore, messageStore types.MessageStore) *GroupService {
 	return &GroupService{groupStore: groupStore, messageStore: messageStore}
 }
-func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) error {
+func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupRequest) (int32, error) {
 	if req.Name == "" {
-		return errors.New("group name is required")
+		return -1, errors.New("group name is required")
 	}
 
 	group := &types.Group{
@@ -31,7 +31,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupR
 	}
 	groupID, err := s.groupStore.CreateGroup(group)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	fisrtMessage := &types.Message{
 		UserID:  req.UserID,
@@ -40,7 +40,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupR
 	}
 	_, _, err = s.messageStore.SendMessage(fisrtMessage)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	err = s.groupStore.AddMemberToGroup(&types.GroupDetail{
 		UserID:  req.UserID,
@@ -49,7 +49,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupR
 	})
 
 	if err != nil {
-		return err
+		return -1, err
 	}
 	for _, memberID := range req.MemberIDs {
 		err := s.groupStore.AddMemberToGroup(&types.GroupDetail{
@@ -58,10 +58,10 @@ func (s *GroupService) CreateGroup(ctx context.Context, req *groups.CreateGroupR
 			RoleID:  2, // Vai trò thành viên
 		})
 		if err != nil {
-			return errors.New("failed to add member %d to group:")
+			return -1, errors.New("failed to add member %d to group:")
 		}
 	}
-	return nil
+	return groupID, nil
 }
 func (s *GroupService) GetUserGroupsWithLatestMessage(ctx context.Context, userID, memberCount int32) ([]*types.GroupWithMessage, error) {
 	if memberCount == 2 {

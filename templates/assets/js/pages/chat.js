@@ -116,13 +116,13 @@ class Chat{
     }
 
     socket(){
-        const socket = new WebSocket("ws://localhost:1000/api/v1/ws");
+        const socket = new WebSocket("ws://10.252.3.82:1000/api/v1/ws");
 
         socket.onmessage =async (event) => {
             const message = JSON.parse(event.data);
             if(message.group_id ==this.current_conversation_id){
                 this.current_conversation = await this.getCurrentConversationById(message.group_id);
-                // console.log(this.current_conversation);
+                console.log(this.current_conversation);
                 // this.current_conversation.push({
                 //     ID: null,
                 //     UserID:message.user_id,

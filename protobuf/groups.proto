@@ -40,6 +40,7 @@ message CreateGroupRequest{
 }
 message CreateGroupResponse{
   string Status=1;
+  string GroupID=2;
 }
 message DeleteGroupRequest{
   int32 UserID=1;

@@ -26,6 +26,7 @@ func (h *GroupsGrpcHandler) CreateGroup(ctx context.Context, req *groups.CreateG
 		return nil, err
 	}
 	return &groups.CreateGroupResponse{
+		//
 		Status: "success",
 	}, nil
 }

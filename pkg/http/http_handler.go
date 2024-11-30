@@ -35,51 +35,70 @@ func NewHttpHandler(grpcClient *grpc.ClientConn) *HttpHandler {
 }
 
 type WebSocketClient struct {
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
+	hub    *Hub
+	conn   *websocket.Conn
+	send   chan []byte
+	userID int32
+}
+type Message struct {
+	TargetUserID int32
+	Content      string
 }
 type Hub struct {
-	clients    map[*WebSocketClient]bool
-	broadcast  chan []byte
-	register   chan *WebSocketClient
-	unregister chan *WebSocketClient
+	clients       map[int32]*WebSocketClient
+	groups        map[int32][]int32
+	broadcast     chan Message
+	register      chan *WebSocketClient
+	unregister    chan *WebSocketClient
+	registerGroup chan GroupRegistration // Kênh để đăng ký group
+}
+type GroupRegistration struct {
+	GroupID int32
+	UserID  int32
+}
+
+func (h *Hub) RegisterUserToGroup(groupID, userID int32) {
+	h.registerGroup <- GroupRegistration{
+		GroupID: groupID,
+		UserID:  userID,
+	}
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		clients:    make(map[*WebSocketClient]bool),
-		broadcast:  make(chan []byte),
-		register:   make(chan *WebSocketClient),
-		unregister: make(chan *WebSocketClient),
+		clients:       make(map[int32]*WebSocketClient),
+		groups:        make(map[int32][]int32),
+		broadcast:     make(chan Message),
+		register:      make(chan *WebSocketClient),
+		unregister:    make(chan *WebSocketClient),
+		registerGroup: make(chan GroupRegistration),
 	}
-}
-func (h *Hub) SendMessage(message []byte) {
-	h.broadcast <- message
 }
 
 func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:
-			h.clients[client] = true
+			h.clients[client.userID] = client
 		case client := <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
+			if _, ok := h.clients[client.userID]; ok {
+				delete(h.clients, client.userID)
 				close(client.send)
 			}
+		case group := <-h.registerGroup:
+			// Đăng ký user vào group
+			h.groups[group.GroupID] = append(h.groups[group.GroupID], group.UserID)
 		case message := <-h.broadcast:
-			for client := range h.clients {
-				select {
-				case client.send <- message:
-				default:
-					delete(h.clients, client)
-					close(client.send)
+			// Gửi tin nhắn đến tất cả thành viên trong nhóm
+			for _, userID := range h.groups[message.TargetUserID] { // TargetUserID = groupID
+				if client, ok := h.clients[userID]; ok {
+					client.send <- []byte(message.Content)
 				}
 			}
 		}
 	}
 }
+
 func (c *WebSocketClient) ReadPump() {
 	defer func() {
 		c.hub.unregister <- c
@@ -91,7 +110,6 @@ func (c *WebSocketClient) ReadPump() {
 			break
 		}
 		log.Println("Received message:", string(message))
-		c.hub.broadcast <- message
 	}
 }
 
@@ -104,6 +122,7 @@ func (c *WebSocketClient) WritePump() {
 		}
 	}
 }
+
 func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.GET("/hello", h.SayHello)
 	e.POST("/register", h.RegisterHandler)
@@ -137,8 +156,14 @@ func (h *HttpHandler) RegisterRoutes(e *echo.Group) {
 	e.GET("/contact/pending-received", h.GetPendingReceivedContactsHandler, auth.WithJWTAuth())
 	e.POST("/contact/reject", h.RejectContactHandler, auth.WithJWTAuth())
 	e.GET("/contact/not-in-group/:group_id", h.GetContactsNotInGroupHandler, auth.WithJWTAuth())
-	e.GET("/ws", h.WebSocketHandler)
+	e.GET("/ws", h.WebSocketHandler, auth.WithJWTAuth())
 
+}
+func (h *Hub) SendMessageToUser(targetUserID int32, content string) {
+	h.broadcast <- Message{
+		TargetUserID: targetUserID,
+		Content:      content,
+	}
 }
 
 func (h *HttpHandler) WebSocketHandler(c echo.Context) error {
@@ -153,13 +178,28 @@ func (h *HttpHandler) WebSocketHandler(c echo.Context) error {
 		return err
 	}
 
+	// Lấy userID từ context hoặc truy vấn
+	userID := c.Get("user_id").(int32)
+
 	client := &WebSocketClient{
-		hub:  h.hub,
-		conn: conn,
-		send: make(chan []byte, 256),
+		hub:    h.hub,
+		conn:   conn,
+		send:   make(chan []byte, 256),
+		userID: userID, // Gán userID
 	}
 	h.hub.register <- client
+	groupClient := groups.NewGroupServiceClient(h.grpcClient)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
+	defer cancel()
 
+	res, err := groupClient.GetListUserGroup(ctx, &groups.GetListUserGroupRequest{
+		UserID: userID,
+	})
+	if err == nil {
+		for _, group := range res.Groups {
+			h.hub.RegisterUserToGroup(group.ID, userID)
+		}
+	}
 	go client.WritePump()
 	go client.ReadPump()
 
@@ -811,6 +851,7 @@ func (h *HttpHandler) CreateGroupHandler(c echo.Context) error {
 		Name:      payload.Name,
 		MemberIDs: payload.MemberIds,
 	})
+
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
