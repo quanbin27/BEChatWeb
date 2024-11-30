@@ -47,22 +47,12 @@ class Chat{
         this.profileUsername = this.profileDetail.querySelector('.user-name.mb-1.text-truncate');
         this.profileUsername1 = this.profileDetail.querySelector('.user-name.font-size-14.text-truncate');
 
-        this.current_conversation = [];
         this.current_conversation_id = null;
     }
 
     async init(){
         this.favouriteUserData = await this.getFavouriteUsers();
         this.favouriteGroupData = await this.getFavouriteGroups();
-
-        // if(this.favouriteUserData.length>0){
-        //     this.avatar.src = this.favouriteUserData[0].image_path;
-        //     this.userName.textContent = this.favouriteUserData[0].name;
-        //     this.profileAvatar.src = this.favouriteUserData[0].image_path;
-        // }
-        // else if(this.favouriteGroupData.length >0){
-            
-        // }
 
         this.renderFavouriteUsers(this.favouriteUserData);
         this.renderFavouriteGroups(this.favouriteGroupData);
@@ -78,14 +68,6 @@ class Chat{
             this.renderDefaultMessage();
         }
             
-        // ?? chạy khác đi
-        // this.chatinput.addEventListener('keydown',(event)=>{
-        //     if(this.chatinput.value == '')return;
-        //     if(event.key === 'Enter'){
-        //         console.log('a')
-        //         // this.btnSend.onclick();
-        //     }
-        // })
         this.btnSend.onclick = async (event)=>{
             event.preventDefault();
             if(this.chatinput.value == '')
@@ -95,6 +77,7 @@ class Chat{
                 content: this.chatinput.value, 
             }
             if(this.current_conversation_id === null) return;
+            this.chatinput.value = '';
             const response = await this.sendMessage(newMessage);
             if(response === 'error'){
                 return;
@@ -102,76 +85,33 @@ class Chat{
             newMessage = {
                 ID: response.MessageID,
                 UserID: this.store.profile.user_id,
-                GroupID: this.store.group.current_group_id,
+                GroupID: this.current_conversation_id,
                 Content: newMessage.content,
             }
-            this.current_conversation.push(newMessage);
-
-            this.chatinput.value = '';
-            //tại vì nó đã được socket tạo lại nên không cần
-            // this.renderConversation(this.current_conversation);
-
-        }
-        this.socket();
-    }
-
-    socket(){
-        const socket = new WebSocket("ws://10.252.3.82:1000/api/v1/ws");
-
-        socket.onmessage =async (event) => {
-            const message = JSON.parse(event.data);
-            if(message.group_id ==this.current_conversation_id){
-                this.current_conversation = await this.getCurrentConversationById(message.group_id);
-                console.log(this.current_conversation);
-                // this.current_conversation.push({
-                //     ID: null,
-                //     UserID:message.user_id,
-                //     GroupID:message.group_id,
-                //     Content:message.content,
-                // })  
-                this.renderConversation(this.current_conversation);
-            }
- 
-            const li =  this.findFavouriteUserAndGroupLi(message.group_id);
-            if(li!=null){
-                const last_message = li.li.querySelector('.last-message');
-                last_message.textContent = message.content;
-                if(li.type === 'user'){
-                    this.favouriteUsers.removeChild(li.li);
-                    this.favouriteUsers.insertBefore(li.li,this.favouriteUsers.children[0]||null);
-                }else{
-                    this.favouriteGroups.removeChild(li.li);
-                    this.favouriteGroups.insertBefore(li.li,this.favouriteGroups.children[0]||null);
-                }
-            }
-            else{
-            //tạm
-            // không có thì render lại hoàn toàn hoặc thêm 1 phần tử
-                // const temp  = await this.getFavouriteGroups();
-                // const temp1 = await this.getFavouriteUsers();
-                // this.renderFavouriteGroups(temp);
-                // this.renderFavouriteUsers(temp1)
-            }
-
-        }
-
-        socket.onopen = function() {
+            this.receiveMessage(newMessage.GroupID,newMessage.UserID,newMessage.Content,newMessage.ID);
             
-            console.log("WebSocket connection established");
-        };
-
-        socket.onerror = function(error) {
-            console.log("WebSocket error:", error);
-        };
+        }
     }
 
+    
     renderDefaultMessage() {
         const defaultMessages = [
             { Content: 'Welcome to our website!' },
             { Content: 'Feel free to explore and chat.' },
             { Content: 'You can add friends and create groups.' }
         ];
-    
+        const btnAddMoreContact = document.querySelector('.add-more-contact');
+        btnAddMoreContact.style.display = 'none';
+        let image_path = 'assets/images/users/user-dummy-img.jpg';
+        this.avatar.src = image_path;
+        this.userName.textContent = 'Default chat';
+        this.profileUsername.textContent = 'Default chat';
+        this.profileUsername1.textContent = 'Default chat';
+        this.profileAvatar.src = image_path;
+
+        const groupContact = this.profileDetail.querySelector('.group-contacts');
+        groupContact.style.display = 'none';
+
         this.renderConversation(defaultMessages);
     }
     
@@ -269,10 +209,7 @@ class Chat{
     messageElement(conversation){
         const chatListRight = document.createElement('li');
         chatListRight.setAttribute('data-message-id',conversation.ID);
-        if(conversation.UserID===this.store.profile.user_id)//tạm
-            chatListRight.className = 'chat-list right'
-        else
-            chatListRight.className = 'chat-list left';
+        
         const now = new Date();
         const hours = now.getHours(); // Lấy giờ
         const minutes = now.getMinutes(); // Lấy phút
@@ -280,6 +217,8 @@ class Chat{
         chatListRight.innerHTML =`
         <div class="conversation-list">
             <div class="user-chat-content">
+                ${conversation.UserID===this.store.profile.user_id? '':'<span>${Võ văn a}</span>'}
+                
                 <div class="ctext-wrap">
                     <div class="ctext-wrap-content">
                         <p class="mb-0 ctext-content">${conversation.Content}</p>
@@ -305,6 +244,19 @@ class Chat{
             </div>
         </div>
         `
+        if(conversation.UserID == this.store.profile.user_id){
+            chatListRight.className = 'chat-list right'
+            const btnDelete = chatListRight.querySelector('.delete-item');
+                btnDelete.onclick = async ()=>{
+                    const messageResponse = await this.deleteMessage(messageData.ID);
+                    if(messageResponse==='success'){
+                        this.userConversation.removeChild(message);
+                    }
+                }
+        }
+        else{
+            chatListRight.className = 'chat-list left';
+        }
         return chatListRight;
     }
 
@@ -345,17 +297,10 @@ class Chat{
         }).catch(()=>{return 'error';})
     }
     renderConversation(current_conversation){
+        console.log(current_conversation);
         this.userConversation.innerHTML = ''
         for(let messageData of current_conversation){
             const message = this.messageElement(messageData);
-            const btnDelete = message.querySelector('.delete-item');
-            btnDelete.onclick =async ()=>{
-                const messageResponse = await this.deleteMessage(messageData.ID);
-                if(messageResponse==='success'){
-                    this.userConversation.removeChild(message);
-                    this.current_conversation = this.current_conversation.filter(mess => mess.ID!=messageData.ID);
-                }
-            }
             this.userConversation.appendChild(message);
         }
         const scroll = document.querySelector('.chat-conversation .simplebar-offset .simplebar-content-wrapper')
@@ -407,7 +352,7 @@ class Chat{
                 <img src = ${userData.image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
                 <div style = 'display:flex; flex-direction:column'>
                     <span style= 'font-size: medium; font-weight:600;' class = 'username'>${userData.username}</span>
-                    <span class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:190px;' >${userData.latest_message}</span>
+                    <span class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:190px;' >${userData.latest_message==null?'':userData.latest_message}</span>
                 </div>
             </div>
         `
@@ -423,40 +368,12 @@ class Chat{
         this.favouriteUsers.innerHTML = '';
         for(let userData of favouriteUserData){
             const user = this.createFavouriteUserLi(userData);
-            // const user = document.createElement('li');
-            // user.style.cursor = 'pointer';
-            // user.onmouseover=()=>{
-            //     user.style.backgroundColor = '#d5d5d5'
-            // }
-            // user.onmouseleave=()=>{
-            //     user.style.backgroundColor = 'white';
-            // }
-            // user.style.marginTop = '10px';
-            // if(userData.image_path == null){
-            //     userData['image_path'] = 'assets/images/users/user-dummy-img.jpg'
-            // }
-            // if(userData.message == null) userData['message'] = '';
-            // user.innerHTML = `
-            //     <div style='display:flex; gap:10px; margin-left:10px; align-items:center  '>
-            //         <img src = ${userData.image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
-            //         <div style = 'display:flex; flex-direction:column'>
-            //             <span style= 'font-size: medium; font-weight:600;' class = 'username'>${userData.username}</span>
-            //             <span class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:190px;' >${userData.latest_message}</span>
-            //         </div>
-            //     </div>
-            // `
-            // user.setAttribute('data-user-id',userData.other_user_id);//chua co
-            // user.setAttribute('data-chat-id',userData.group_id);
-            // user.onclick = ()=>{
-            //     this.selectedUser(userData)
-            // }
             this.favouriteUsers.appendChild(user);
 
         }
     }
 
     async selectedUser(userData){
-        this.store.group.current_group_id = userData.group_id;
         let user = this.favouriteUsers.querySelector(`li[data-chat-id="${userData.group_id}"]`);
         if(user == null)
             user = this.favouriteGroups.querySelector(`li[data-chat-id="${userData.group_id}"]`);
@@ -475,8 +392,8 @@ class Chat{
 
         const currentConversationId = userData.group_id;
         this.current_conversation_id = currentConversationId;
-        this.current_conversation = await this.getCurrentConversationById(currentConversationId);
-        this.renderConversation(this.current_conversation);
+        const current_conversation = await this.getCurrentConversationById(currentConversationId);
+        this.renderConversation(current_conversation);
         let currentChat = this.favouriteUsers.querySelector('li.current');
         if(currentChat === null) currentChat = this.favouriteGroups.querySelector('li.current');
         if(currentChat !=null)
@@ -504,12 +421,13 @@ class Chat{
             group.style.backgroundColor = 'white';
         }
         group.style.marginTop = '10px';
+        let image_path = 'assets/images/group.jpg';
         group.innerHTML = `
             <div style='display:flex; gap:10px; margin-left:10px; align-items:center  '>
-                <img src = ${groupData.image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
+                <img src = ${image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
                 <div style = 'display:flex; flex-direction:column'>
                     <span style= 'font-size: medium; font-weight:600;' class = 'groupname'>${groupData.group_name}</span>
-                    <span  class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:100px;'>${groupData.latest_message}</span>
+                    <span  class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:180px;'>${groupData.latest_message}</span>
                 </div>
             </div>
         `
@@ -525,53 +443,10 @@ class Chat{
         for(let groupData of favouriteGroupData){
             groupData['image_path'] = image_path;
             const group = this.createFavouriteGroupLi(groupData);
-            // const group = document.createElement('li');
-            // group.style.cursor = 'pointer';
-            // group.onmouseover=()=>{
-            //     group.style.backgroundColor = '#d5d5d5'
-            // }
-            // group.onmouseleave=()=>{
-            //     group.style.backgroundColor = 'white';
-            // }
-            // group.style.marginTop = '10px';
-            // group.innerHTML = `
-            //     <div style='display:flex; gap:10px; margin-left:10px; align-items:center  '>
-            //         <img src = ${groupData.image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
-            //         <div style = 'display:flex; flex-direction:column'>
-            //             <span style= 'font-size: medium; font-weight:600;' class = 'groupname'>${groupData.group_name}</span>
-            //             <span  class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:100px;'>${groupData.latest_message}</span>
-            //         </div>
-            //     </div>
-            // `
-            // group.setAttribute('data-chat-id',groupData.group_id);
-            // group.onclick = ()=>{
-            //     this.selectedGroup(groupData)
-            // }
             this.favouriteGroups.appendChild(group);
 
         }
     }
-    // async getContactInGroup(groupId){
-    //     // let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
-    //     let token = this.store.profile.getToken();
-    //     const result = fetch(`/api/v1/group/${groupId}/member`,{
-    //         method:'GET',
-    //         headers:{
-    //             'authorization':`Bearer ${token}`
-    //         }
-    //     }).then(async response => {
-    //         if(!response.ok){
-    //             return [];
-    //         }
-    //         const responseJson = await response.json();
-
-    //         if(Object.keys(responseJson).length == 0)return [];
-    //         return responseJson.Members;
-    //     }).catch(()=>{
-    //         return [];
-    //     })
-    //     return result;
-    // }
 
     async renderMemberInGroup(currentConversationId){
         function createLi(member){
@@ -675,7 +550,6 @@ class Chat{
     }
     async selectedGroup(chatData){
 
-        this.store.group.current_group_id = chatData.group_id;
 
         let chat = this.favouriteUsers.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
         if(chat == null)
@@ -693,8 +567,8 @@ class Chat{
         this.current_conversation_id = currentConversationId;
    
         this.renderMemberInGroup(currentConversationId);
-        this.current_conversation = await this.getCurrentConversationById(currentConversationId);
-        this.renderConversation(this.current_conversation);
+        const current_conversation = await this.getCurrentConversationById(currentConversationId);
+        this.renderConversation(current_conversation);
         let currentChat = this.favouriteUsers.querySelector('li.current');
         if(currentChat === null) currentChat = this.favouriteGroups.querySelector('li.current');
         if(currentChat !=null)
@@ -711,6 +585,114 @@ class Chat{
 
         }
     }
+
+    findFavouriteUserLiByUserId(userId){
+        const list = this.favouriteUsers.querySelectorAll('li');
+        for(const li of list){
+            const id = li.getAttribute('data-user-id');
+            if(parseInt(id) === parseInt(userId)){
+                return li;
+            }
+        }
+        return null;
+    }
+    findFavouriteGroupLiByGroupId(groupId){
+        const list = this.favouriteGroups.querySelectorAll('li');
+        for(const li of list){
+            const id = li.getAttribute('data-chat-id');
+            if(parseInt(id) === parseInt(groupId)){
+                return li;
+            }
+        }
+        return null;
+    }
+    //thêm vào để xử lý khi có sự kiện thêm liên hệ từ socket nếu liên hệ đó có rồi thi thôi không thì thêm
+    async addFavoriteUsers(userId){
+        console.log('select new contact',userId);
+        let li = this.findFavouriteUserLiByUserId(userId);
+        if(li!== null){
+            return;
+        }
+        
+        const favouriteUsers = await this.getFavouriteUsers();
+        this.renderFavouriteUsers(favouriteUsers);
+    }
+    // thêm group mới vào khi người dùng đó được người khác thêm vào.
+    async addNewGroupToFavoriteGroups(groupId,groupName){
+        console.log(groupId,groupName);
+        const groupData = {
+            group_id:groupId,
+            group_name:groupName,
+            latest_message: 'You have been added to the group abc'
+        }
+        let li = this.findFavouriteGroupLiByGroupId(groupId);
+        if(li!=null) return;
+        li = this.createFavouriteGroupLi(groupData);
+        this.favouriteGroups.insertBefore(li,this.favouriteGroups.firstChild);
+    }
+
+    // xóa group ra khỏi giao diện người dùng khi người dùng đó bị click hoặc tự out
+    async deleteGroupInFavoriteGroups(groupId){
+        const li = this.findFavouriteGroupLiByGroupId(groupId);
+        if(li == null)return;
+        this.favouriteGroups.removeChild(li);
+
+        // nhằm xóa đi avatar hay thành viên còn sót lại khi bị out nhóm
+        if(this.current_conversation_id == groupId)
+            this.renderDefaultMessage();
+    }
+
+    findMessageLiInConversation(messageId){
+        const list = this.userConversation.querySelectorAll('li');
+        for(let li of list){
+            let dataMessageId = li.getAttribute('data-message-id');
+            if(parseInt(dataMessageId) === parseInt(messageId)){
+                return li;
+            }
+        }
+        return null;
+    }
+    deleteMessageOfOtherConversation(groupId,messageId){
+        console.log('groupId:   ',groupId, 'messageId: ',messageId)
+        if(this.current_conversation_id !== groupId) return;
+        const li = this.findMessageLiInConversation(messageId);
+        if(li == null) return;
+        li.querySelector('.mb-0.ctext-content').textContent = 'The user has deleted the message.'
+        li.querySelector('.ctext-wrap-content').style.backgroundColor = 'white';
+        // if(li!=null)
+        //     this.userConversation.removeChild(li);
+    }
+    receiveMessage(groupId,userId,content,messageId){
+        console.log(userId)
+        const li = this.findFavouriteUserAndGroupLi(groupId);
+
+        if(li == null) return;
+        const lastMessage = li.li.querySelector('.last-message');
+        lastMessage.textContent = content;
+        if(li.type === 'user'){
+            if(this.favouriteUsers.firstChild != li.li) {
+                this.favouriteUsers.removeChild(li.li);
+                this.favouriteUsers.insertBefore(li.li,this.favouriteUsers.firstChild);
+            }
+        }
+        else{
+            if(this.favouriteGroups.firstChild != li.li){
+                this.favouriteGroups.removeChild(li.li);
+                this.favouriteGroups.insertBefore(li.li,this.favouriteGroups.firstChild);
+            }
+        }
+        if(this.store.chat.current_conversation_id != groupId) {
+            return;
+        }
+        const newMessage = this.messageElement({
+            ID:messageId,
+            UserID: userId,
+            Content:content
+        })
+        this.userConversation.appendChild(newMessage);
+        const scroll = document.querySelector('.chat-conversation .simplebar-offset .simplebar-content-wrapper')
+        scroll.scrollTop = scroll.scrollHeight;
+    }
 }
 
 class Group{
@@ -725,8 +707,6 @@ class Group{
             this.openForm();
         }
         this.btnClose1.onclick = this.btnClose2.onclick = ()=>this.closeForm();
-
-        this.current_group_id = null;
     }
     getFriendList(){
         return this.store.getContact().getContacts();
@@ -754,7 +734,6 @@ class Group{
             return li;
         }
         function createGroup(group_info,token){
-            // let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
           
             const response = fetch('/api/v1/group',{
                 method:'POST',
@@ -905,7 +884,6 @@ class Contact{
     }
     // =======================Pending Contact================================
     getPendingContacts(){
-        // let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
         let token = this.store.profile.getToken();
         const response = fetch('/api/v1/contact/pending-received',{
             method:'GET',
@@ -916,6 +894,10 @@ class Contact{
             if(re.ok){
                 const pendingContacts = await  re.json();
                 if(Object.keys(pendingContacts).length ===0)return [];
+                for(let contact of pendingContacts.contacts){
+                    let contactInfo = await this.getContactInfo(contact.user_id);
+                    contact.avatar = contactInfo.avatar;
+                }
                 return pendingContacts.contacts;
             }
             return []
@@ -925,7 +907,6 @@ class Contact{
 
     async openPedingContactForm(){
         function  acceptContact(contact,token){
-            // let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
             //Tạm
             const response = fetch('/api/v1/contact/accept',{
                 method:'POST',
@@ -948,7 +929,6 @@ class Contact{
             const data = {
                 contact_user_id: contact.user_id,
             }
-            // let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
             return fetch('/api/v1/contact',{
                 method:'DELETE',
                 headers:{
@@ -968,16 +948,23 @@ class Contact{
             )
         }
         function createPendingContactElement(contact){
-            let image_path = 'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg';
+            console.log('pending contact',contact);
+            let image_path = 'assets/images/users/user-dummy-img.jpg';
+            if(contact.avatar === null){
+                contact.avatar = image_path;
+            }
             const li = document.createElement('li');
             li.style.padding = '8px 24px';
             li.style.marginTop= '8px';
-    
+            
             li.innerHTML =`
                     <div style="display: flex; justify-content: space-between;gap: 10px; align-items: center;">
                         <div style="display: flex; align-items: center; gap:10px">
-                            <img src=${image_path} alt="" style="width: 2.5rem;height: 2.5rem; border-radius: 50%;">
-                            <h5 class="font-size-14 m-0">${contact.username}</h5>
+                            <img src=${contact.avatar} alt="" style="width: 2.5rem;height: 2.5rem; border-radius: 50%;">
+                            <div>
+                                <h5 class="font-size-14 m-0">${contact.username}</h5>
+                                <span>${contact.email}</span>
+                            </div>
                         </div>
                         <div> 
                             <button type="button" class="btn btn-soft-primary btn-sm accept">
@@ -1244,10 +1231,11 @@ class Contact{
         this.contactDiv.innerHTML = ''
         const ul = document.createElement('ul');
         ul.className = 'list-unstyled';
-        let image_path = 'https://s120-ava-talk.zadn.vn/4/8/8/f/4/120/e39bbde1f51d8b1bac7f79ce4510bd7d.jpg';
+        let image_path = 'assets/image/users/user-dummy-img.jpg';
         for(let contact of contacts){
             const contactInfo = await this.getContactInfo(contact.user_id)
-            image_path = contactInfo.avatar;//tạm gọi api phải có luôn avatar
+            if(contactInfo.avatar!=null)
+                image_path = contactInfo.avatar;//tạm gọi api phải có luôn avatar
             const li = document.createElement('li');
             li.className = 'contact';
             li.innerHTML = `
@@ -1293,8 +1281,8 @@ class Contact{
         this.contactDiv.appendChild(ul);
     }
     selectContact(contact) {
-        // console.log(`Contact ${contact.name} được chọn.`);
-        // store.setState({ selectedContact: contact });
+        console.log(`Contact ${contact.name} được chọn.`);
+        // this.store.chat.sele
     }
     async getContacts(){
         let token = this.store.profile.getToken();
@@ -1468,6 +1456,9 @@ class Profile{
         }
         return token;   
     }
+    deleteToken(){
+        localStorage.removeItem('token');
+    }
     setInfo(){
         const userInfoImage = this.profileWrapperDiv.querySelector('.rounded-circle.avatar-lg.img-thumbnail')
         const settingImage = this.settingWrapperDiv.querySelector('.rounded-circle.avatar-lg.img-thumbnail.user-profile-image')
@@ -1508,6 +1499,86 @@ class Profile{
 class Setting{
 
 }
+
+class Socket{
+    constructor(store){
+        this.store = store;
+        this.socket();
+    }
+    
+    socket(){
+        const socket = new WebSocket(`ws://${window.location.hostname}:1000/api/v1/ws/${this.store.profile.getToken()}`);
+        
+        window.addEventListener('beforeunload', () => {
+            alert('a')
+            socket.close();
+        });
+        socket.onmessage =async (event) => {
+            const message = JSON.parse(event.data);
+            console.log(message)
+            if(message.func === null){
+                toastr('Can not use web chat now','Server error');
+                return;
+            }   
+            
+            switch(message.func){
+                case 'acceptFriend':
+                    this.socketAddFriend(message.user_id);
+                    break;
+                case 'deleteMessage':
+                    this.socketDeleteMessage(message.group_id,message.message_id);
+                    break;
+                case 'createGroup':
+                    this.socketCreateGroup(message.group_id,message.group_name,message.owner_id);
+                    break;
+                case 'addMember':
+                    this.socketAddToGroup(message.group_id,message.group_name,message.owner_id);
+                    break;
+                case 'sendMessage':
+                    this.socketReceiveMessage(message.group_id,message.user_id,message.content);
+                    break;
+                case 'kickMember':
+                    this.socketClickMember(message.group_id,message.user_id);
+            }
+
+        }
+
+        socket.onopen = function() {
+            
+            console.log("WebSocket connection established");
+        };
+
+        socket.onerror = function(error) {
+            console.log("WebSocket error:", error);
+        };
+        socket.onclose = function(){
+            // socket.close();
+        }
+    }
+    async socketAddFriend(userId){
+        const contacts = await this.store.contact.getContacts();
+        this.store.contact.renderContacts(contacts);
+        this.store.chat.addFavoriteUsers(userId);
+    }
+    async socketDeleteMessage(groupId,messageId){
+        this.store.chat.deleteMessageOfOtherConversation(groupId,messageId);
+    }
+    async socketCreateGroup(groupId,groupName,ownerId){
+        if(this.store.profile.user_id == ownerId) return; // người đó tạo nên không cần add chi.
+        this.store.chat.addNewGroupToFavoriteGroups(groupId,groupName);
+    }
+    async socketAddToGroup(groupId,groupName,ownerId){
+        if(this.store.profile.user_id == ownerId) return; // người đó tạo nên không cần add chi.
+        this.store.chat.addNewGroupToFavoriteGroups(groupId,groupName);
+    }
+    async socketReceiveMessage(groupId,userId,content){
+        if(this.store.profile.user_id == userId) return;
+        this.store.chat.receiveMessage(groupId,userId,content,null);
+    }
+    socketClickMember(groupId,userId){
+        this.store.chat.deleteGroupInFavoriteGroups(groupId)
+    }
+}
 async function main(){
     const store = new Store(); // Khởi tạo trạng thái chung
     const chat = new Chat(store);
@@ -1521,7 +1592,8 @@ async function main(){
     await profile.init();
     await chat.init();
     await contact.init();
-
+    
+    const socket = new Socket(store);
 
     toastr.options = {
         "closeButton": false, // Không hiện nút đóng
@@ -1529,25 +1601,15 @@ async function main(){
         "positionClass": "toast-top-right", // Vị trí: góc phải trên
         "timeOut": "3000",    // Tự động đóng sau 3 giây
     };
+
+    const btnLogout = document.querySelector('.logout');
+    console.log(btnLogout)
+    btnLogout.onclick = ()=>{
+        profile.deleteToken();
+        window.location.href = '/login';
+    }
 }
 main();
-
-// Swal.fire({
-//     title: 'Thông báo!',
-//     text: 'Đây là alert tự động tắt!',
-//     icon: 'success', // success, error, warning, info, question
-//     timer: 3000,     // Tự động đóng sau 3 giây
-//     showConfirmButton: false // Không hiện nút OK
-// });
-
-// toastr.options = {
-//     "closeButton": false, // Không hiện nút đóng
-//     "progressBar": true,  // Thanh tiến trình hiển thị thời gian tắt
-//     "positionClass": "toast-top-right", // Vị trí: góc phải trên
-//     "timeOut": "3000",    // Tự động đóng sau 3 giây
-// };
-// toastr.success('Đây là alert tự động tắt!', 'Thành công');
-
 
 // Xóa rồi thêm lại
 // thêm thành viên vào nhóm => hiển thị giao diện nhóm mới cho thằng được thêm
@@ -1565,3 +1627,10 @@ main();
 // type: nhóm hay người dùng
 
 // ================================== khi vừa đồng ý kết bạn=================================
+
+
+//==============================Note mới =================================//
+// đã kết bạn rồi thì không gửi lời mời lại được nữa.
+// lúc thêm thành viên thì thêm tên nhóm nữa khỏi reload lại.
+// load tin nhắn phải thêm tên của người nhắn nữa.
+// rời nhóm. chuyển role. admin thì ko cho rời.
