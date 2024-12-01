@@ -217,7 +217,7 @@ class Chat{
         chatListRight.innerHTML =`
         <div class="conversation-list">
             <div class="user-chat-content">
-                ${conversation.UserID===this.store.profile.user_id? '':'<span>${Võ văn a}</span>'}
+                ${conversation.UserID===this.store.profile.user_id? '':`<span style = 'padding:5px'>${conversation.UserName}</span>`}
                 
                 <div class="ctext-wrap">
                     <div class="ctext-wrap-content">
@@ -495,6 +495,38 @@ class Chat{
                 return 'error';
             })
         }
+        async function leaveGroup(groupId,token){
+            return fetch(`/api/v1/group/${groupId}/leave`,{
+                method:'POST',
+                headers:{
+                    'authorization':`Bearer ${token}`,
+                    'content-type':'application/json'
+                },
+            }).then(re=>{
+                if(re.ok){
+                    return 'success';
+                }
+                return 'error';
+            }).catch(()=>{return 'error'});
+        }
+        async function changeAdmin(groupId,newAdminId,token) {
+            return fetch(`/api/v1/group/${groupId}/change-admin`,{
+                method:'PATCH',
+                headers:{
+                    'content-type':'application/json',
+                    'authorization':`Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    new_admin_id:newAdminId,
+                })
+            }).then(re=>{
+                if(re.ok){
+                    return 'success';
+                }
+                return 'error';
+            })
+            .catch(()=>{return 'error';})
+        }
         // async leaveGroup(groupId)//tạm
         if(currentConversationId == null){
             currentConversationId = this.current_conversation_id;
@@ -515,6 +547,7 @@ class Chat{
         } 
         
         for(let member of members){
+            console.log(member)
             let li = createLi(member);
             const btnWrapper = li.querySelector('.d-flex');
             const temp = btnWrapper.querySelector('.dropdown-menu.dropdown-menu-end')
@@ -523,14 +556,32 @@ class Chat{
             if(role === 'member'){
                 if(member.UserID==this.store.profile.user_id){
                     temp.removeChild(btnRole);
-                    btnDelete.onclick = ()=>{
-                        alert(currentConversationId);
+                    btnDelete.onclick = async ()=>{
+                        let token = this.store.profile.getToken();
+                        const message = await leaveGroup(currentConversationId,token);
+                        if(message == 'success'){
+                            this.deleteGroupInFavoriteGroups(currentConversationId);
+                        }
+                        else{
+                            toastr.error('Please reload and try again','Fail');
+                        }
                     }
                 }
                 else
                     li.removeChild(btnWrapper);
             }
             else{
+                btnRole.onclick = async()=>{
+                    let token = this.store.profile.getToken();
+                    
+                    const message = await changeAdmin(currentConversationId,member.UserID,token);
+                    if(message=='success'){
+                        toastr.success('Change admin successfully','Success');
+                        this.renderMemberInGroup(currentConversationId);
+                    }else{
+                        toastr.error('Please reload page and try again','Fail');
+                    }
+                }
                 btnDelete.onclick = async ()=>{
                     let token = this.store.profile.getToken();
                     const message = await deleteMembers(currentConversationId,member.UserID,token);
@@ -550,7 +601,6 @@ class Chat{
     }
     async selectedGroup(chatData){
 
-
         let chat = this.favouriteUsers.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
         if(chat == null)
             chat = this.favouriteGroups.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
@@ -564,6 +614,22 @@ class Chat{
 
         const currentConversationId = chatData.group_id;
 
+        const btnDeleteGroup = document.querySelector('.btn-delete-group');
+        btnDeleteGroup.onclick = async ()=>{
+            const message = await this.deleteGroup(currentConversationId,this.store.profile.getToken());
+            if(message == 'success'){
+                toastr.success('Delete group successfully','Success');
+                this.deleteGroupInFavoriteGroups(currentConversationId);
+            }
+            else{
+                toastr.error('Please reload and try again','Fail');
+            }
+        }
+        const btnOpenFormRenameGroup = document.querySelector('.btn-rename-group');
+        console.log(chatData)
+        btnOpenFormRenameGroup.onclick = ()=>{
+            this.store.group.openFormChangeName(currentConversationId,chatData.group_name);
+        }
         this.current_conversation_id = currentConversationId;
    
         this.renderMemberInGroup(currentConversationId);
@@ -585,7 +651,22 @@ class Chat{
 
         }
     }
-
+    //chu y
+    async deleteGroup(groupId,token){
+        return fetch(`/api/v1/group/${groupId}`,{
+            method:'DELETE',
+            headers: {
+                'authorization':`Bearer ${token}`
+            }
+        }).then(re=>{
+            if(re.ok){
+                return 'success';
+            }
+            return 'error';
+        }).catch(()=>{
+            return 'error';
+        })
+    }
     findFavouriteUserLiByUserId(userId){
         const list = this.favouriteUsers.querySelectorAll('li');
         for(const li of list){
@@ -664,7 +745,7 @@ class Chat{
         // if(li!=null)
         //     this.userConversation.removeChild(li);
     }
-    receiveMessage(groupId,userId,content,messageId){
+    receiveMessage(groupId,userId,content,messageId,username){
         console.log(userId)
         const li = this.findFavouriteUserAndGroupLi(groupId);
 
@@ -689,7 +770,8 @@ class Chat{
         const newMessage = this.messageElement({
             ID:messageId,
             UserID: userId,
-            Content:content
+            Content:content,
+            UserName:username
         })
         this.userConversation.appendChild(newMessage);
         const scroll = document.querySelector('.chat-conversation .simplebar-offset .simplebar-content-wrapper')
@@ -709,6 +791,8 @@ class Group{
             this.openForm();
         }
         this.btnClose1.onclick = this.btnClose2.onclick = ()=>this.closeForm();
+        this.background = document.createElement('div');
+        this.background.className = 'modal-backdrop fade show';
     }
     getFriendList(){
         return this.store.getContact().getContacts();
@@ -758,8 +842,7 @@ class Group{
             })
             return response;
         }
-        this.background = document.createElement('div');
-        this.background.className = 'modal-backdrop fade show';
+        
         document.body.appendChild(this.background);
         document.body.classList.add('modal-open');
         document.body.style.overflow = 'hidden';
@@ -820,6 +903,95 @@ class Group{
 
             }
         }
+    }
+    async renameGroup(groupId,groupName,token){
+        return fetch(`/api/v1/group/${groupId}/name`,{
+            method:'PATCH',
+            headers:{
+                'content-type':'application/json',
+                'authorization':`Bearer ${token}`
+            },
+            body: JSON.stringify({
+                name:groupName,
+            })
+        })
+        .then(re=>{
+            if(re.ok){
+                return 'success';
+            }
+            return 'error';
+        }).catch(()=>{return 'error'})
+    }
+    openFormChangeName(groupId,groupName){
+        const form = document.createElement('div');
+        form.className = 'modal fade';
+        form.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content modal-header-colored shadow-lg border-0">
+                    
+                    <div class="modal-header">
+                        <h5 class="modal-title text-white font-size-16">Rename</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body p-4">
+                        <div class="d-flex align-items-center px-1">
+                            <div class="flex-grow-1">
+                                <h4 class=" font-size-11 text-muted text-uppercase">GroupName</h4>
+                            </div>
+                        </div>
+                        <input style="border: 1px solid #dadada; width: 100%; margin-top: 25px;" type="text" value="${groupName}">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link" data-bs-dismiss="modal">Cancel</button>
+                       <button type="button" class="btn btn-primary">Change</button>
+                    </div>
+                </div>
+            </div>
+        `  
+        document.body.appendChild(form);
+        document.body.appendChild(this.background);
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+        form.style.display = 'block';
+        form.classList.add('show');
+        
+        const btnClose1 = form.querySelector('.btn-close.btn-close-white');
+        const btnClose2 = form.querySelector('.btn.btn-link');
+        btnClose1.onclick = btnClose2.onclick = ()=>{
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.removeChild(this.background)
+            document.body.removeChild(form);
+        }
+        const input = form.querySelector('input');
+        const btnChange = form.querySelector('.btn.btn-primary');
+        btnChange.onclick =async ()=>{
+            if(input.value ==''){
+                toastr.error('Please enter new group name','Error');
+                return;
+            }
+            let token = this.store.profile.getToken();
+            let newName  = input.value;
+            const message = await this.renameGroup(groupId,newName,token);
+            if(message=='success'){
+                const li = this.store.chat.findFavouriteGroupLiByGroupId(groupId);
+                li.querySelector('.groupname').textContent = newName;
+                li.onclick = ()=>{
+                    this.store.chat.selectedGroup({
+                        group_id: groupId,
+                        group_name: newName,
+                        image_path:"assets/images/group.jpg"
+                    })
+                }
+                li.onclick();
+            }
+            else{
+                toastr.error('Can not change group name','Error');
+            }
+        }
+        return form;
     }
 
     sendData(){
@@ -1464,11 +1636,117 @@ class Profile{
         this.email = null;
         this.profileWrapperDiv = document.querySelector('#pills-user');
         this.settingWrapperDiv = document.querySelector('#pills-setting');
+        this.btnRename = document.querySelector('#btn-rename-user');
+        this.background = document.createElement('div');
+        this.background.className = 'modal-backdrop fade show';
+        this.btnLogout = document.querySelector('.logout');
     }
     async init(){
         await this.getProfile();
         this.setInfo();
+        this.btnRename.onclick = ()=>{
+            this.createFormChangeUsername(this.username);
+        }
+        this.btnLogout.onclick = ()=>{
+            this.deleteToken();
+            window.location.href = '/login';
+        }
     }
+    createFormChangeUsername(username){
+        if(username == ''){
+            toastr.info('Please reload page','Notification')
+            return;
+        }
+        const form = document.createElement('div');
+        form.className = 'modal fade';
+        form.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content modal-header-colored shadow-lg border-0">
+                    
+                    <div class="modal-header">
+                        <h5 class="modal-title text-white font-size-16">Rename</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body p-4">
+                        <div class="d-flex align-items-center px-1">
+                            <div class="flex-grow-1">
+                                <h4 class=" font-size-11 text-muted text-uppercase">Username</h4>
+                            </div>
+                        </div>
+                        <input style="border: 1px solid #dadada; width: 100%; margin-top: 25px;" type="text" value="${username}">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link" data-bs-dismiss="modal">Cancel</button>
+                       <button type="button" class="btn btn-primary">Change</button>
+                    </div>
+                </div>
+            </div>
+        `  
+        document.body.appendChild(form);
+        document.body.appendChild(this.background);
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+        form.style.display = 'block';
+        form.classList.add('show');
+        
+        const btnClose1 = form.querySelector('.btn-close.btn-close-white');
+        const btnClose2 = form.querySelector('.btn.btn-link');
+        btnClose1.onclick = btnClose2.onclick = ()=>{
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.removeChild(this.background)
+            document.body.removeChild(form);
+        }
+        const input = form.querySelector('input');
+        const btnChange = form.querySelector('.btn.btn-primary');
+        btnChange.onclick =async ()=>{
+            if(input.value ==''){
+                toastr.error('Please enter new username','Error');
+                return;
+            }
+            let newName  = input.value;
+            const message = await this.changeUsername(newName);
+            if(message=='success'){
+
+                const settingName= this.settingWrapperDiv.querySelector('.setting-name');
+                settingName.textContent = newName;
+                this.username = newName;
+                toastr.success('Username is changed','Successfully');
+                btnClose1.onclick();
+                this.setInfo();
+            }
+            else{
+                toastr.error('Can not change username','Error');
+            }
+        }
+        return form;
+    }
+    async changeUsername(newName){
+        let token = this.getToken();
+        return fetch('/api/v1/changeInfo',{
+            method:'POST',
+            headers:{
+                'authorization': `Bearer ${token}`,
+                'content-type':'application/json',
+            },
+            body:JSON.stringify({
+                name: newName,
+                email: this.email,
+                bio: 'we are the best',
+            })
+        }).then(re=>{
+            if(re.ok){
+                return 'success';
+            }
+            return 'error';
+        }).catch((error)=>{
+            console.log(error);
+            return 'error';
+        })
+    }
+
     getToken(){
         const token = localStorage.getItem('token');
         // console.log(token);
@@ -1554,7 +1832,7 @@ class Socket{
                     this.socketAddToGroup(message.group_id,message.group_name,message.owner_id);
                     break;
                 case 'sendMessage':
-                    this.socketReceiveMessage(message.group_id,message.user_id,message.content);
+                    this.socketReceiveMessage(message.group_id,message.user_id,message.content,message.message_id,message.user_name);
                     break;
                 case 'kickMember':
                     this.socketClickMember(message.group_id,message.user_id);
@@ -1590,9 +1868,9 @@ class Socket{
         if(this.store.profile.user_id == ownerId) return; // người đó tạo nên không cần add chi.
         this.store.chat.addNewGroupToFavoriteGroups(groupId,groupName);
     }
-    async socketReceiveMessage(groupId,userId,content){
+    async socketReceiveMessage(groupId,userId,content,messageId,username){
         if(this.store.profile.user_id == userId) return;
-        this.store.chat.receiveMessage(groupId,userId,content,null);
+        this.store.chat.receiveMessage(groupId,userId,content,messageId,username);
     }
     socketClickMember(groupId,userId){
         this.store.chat.deleteGroupInFavoriteGroups(groupId)
@@ -1611,7 +1889,7 @@ async function main(){
     await profile.init();
     await chat.init();
     await contact.init();
-    
+
     const socket = new Socket(store);
 
     toastr.options = {
@@ -1621,12 +1899,12 @@ async function main(){
         "timeOut": "3000",    // Tự động đóng sau 3 giây
     };
 
-    const btnLogout = document.querySelector('.logout');
-    console.log(btnLogout)
-    btnLogout.onclick = ()=>{
-        profile.deleteToken();
-        window.location.href = '/login';
-    }
+    // const btnLogout = document.querySelector('.logout');
+    // console.log(btnLogout)
+    // btnLogout.onclick = ()=>{
+    //     profile.deleteToken();
+    //     window.location.href = '/login';
+    // }
 }
 main();
 

@@ -451,7 +451,7 @@
                                 <div id="personalinfo" class="accordion-collapse collapse show" aria-labelledby="headerpersonalinfo" data-bs-parent="#settingprofile">
                                     <div class="accordion-body">
                                         <div class="float-end">
-                                            <button type="button" class="btn btn-soft-primary btn-sm"><i class="bx bxs-pencil align-middle"></i></button>
+                                            <button type="button" id = 'btn-rename-user' class="btn btn-soft-primary btn-sm"><i class="bx bxs-pencil align-middle"></i></button>
                                         </div>
 
                                         <div>
@@ -816,9 +816,9 @@
                                                 <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none user-profile-show" href="#">View Profile <i class="bx bx-user text-muted"></i></a>
                                                 <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".audiocallModal">Audio <i class="bx bxs-phone-call text-muted"></i></a>
                                                 <a class="dropdown-item d-flex justify-content-between align-items-center d-lg-none" href="#" data-bs-toggle="modal" data-bs-target=".videocallModal">Video <i class="bx bx-video text-muted"></i></a>
-                                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Archive <i class="bx bx-archive text-muted"></i></a>
-                                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Muted <i class="bx bx-microphone-off text-muted"></i></a>
-                                                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#">Delete <i class="bx bx-trash text-muted"></i></a>
+                                                <a class="dropdown-item d-flex justify-content-between align-items-center" style="display: none!important;" href="#">Archive <i class="bx bx-archive text-muted"></i></a>
+                                                <a class="dropdown-item d-flex justify-content-between align-items-center btn-rename-group" href="#">Rename Group<i class="bx bx-microphone-off text-muted"></i></a>
+                                                <a class="dropdown-item d-flex justify-content-between align-items-center btn-delete-group" href="#">Delete Group<i class="bx bx-trash text-muted"></i></a>
                                             </div>
                                         </div>
                                     </li>
@@ -2248,6 +2248,9 @@
                 </div>
             </div>
         </div>
+
+
+
     </div>
     <!-- end  layout wrapper -->
 
