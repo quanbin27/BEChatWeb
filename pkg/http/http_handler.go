@@ -58,10 +58,22 @@ type GroupRegistration struct {
 }
 
 func (h *Hub) RegisterUserToGroup(groupID, userID int32) {
-	h.registerGroup <- GroupRegistration{
-		GroupID: groupID,
-		UserID:  userID,
+	// Nếu nhóm chưa tồn tại, tạo nhóm mới
+	if _, exists := h.groups[groupID]; !exists {
+		h.groups[groupID] = []int32{}
 	}
+
+	// Kiểm tra nếu userID đã tồn tại trong nhóm
+	for _, member := range h.groups[groupID] {
+		if member == userID {
+			log.Printf("User %d is already a member of group %d", userID, groupID)
+			return
+		}
+	}
+
+	// Thêm user vào nhóm
+	h.groups[groupID] = append(h.groups[groupID], userID)
+	log.Printf("User %d added to group %d. Current members: %+v", userID, groupID, h.groups[groupID])
 }
 
 func NewHub() *Hub {
@@ -81,10 +93,23 @@ func (h *Hub) Run() {
 		case client := <-h.register:
 			h.clients[client.userID] = client
 		case client := <-h.unregister:
-			if _, ok := h.clients[client.userID]; ok {
+			if _, exists := h.clients[client.userID]; exists {
 				delete(h.clients, client.userID)
 				close(client.send)
+				log.Printf("Client %d unregistered", client.userID)
 			}
+
+			// Loại bỏ user khỏi tất cả các nhóm
+			for groupID, members := range h.groups {
+				for i, member := range members {
+					if member == client.userID {
+						h.groups[groupID] = append(members[:i], members[i+1:]...)
+						log.Printf("User %d removed from group %d", client.userID, groupID)
+						break
+					}
+				}
+			}
+
 		case group := <-h.registerGroup:
 			// Đăng ký user vào group
 			h.groups[group.GroupID] = append(h.groups[group.GroupID], group.UserID)
@@ -170,6 +195,7 @@ func (h *Hub) SendMessageToGroup(groupID int32, content []byte) {
 	if members, exists := h.groups[groupID]; exists {
 		for _, userID := range members {
 			h.SendMessageToUser(userID, content)
+			println(content, " of", userID)
 		}
 	} else {
 		log.Printf("Group %d does not exist", groupID)
@@ -205,16 +231,25 @@ func (h *HttpHandler) WebSocketHandler(c echo.Context) error {
 		return err
 	}
 
-	// Lấy userID từ context hoặc truy vấn
+	// Lấy userID từ context
 	userID := c.Get("user_id").(int32)
+
+	// Kiểm tra nếu client đã tồn tại
+	if _, exists := h.hub.clients[userID]; exists {
+		log.Printf("User %d is already connected", userID)
+		conn.Close() // Đóng kết nối trùng lặp
+		return c.JSON(http.StatusConflict, map[string]string{"error": "User already connected"})
+	}
 
 	client := &WebSocketClient{
 		hub:    h.hub,
 		conn:   conn,
 		send:   make(chan []byte, 256),
-		userID: userID, // Gán userID
+		userID: userID,
 	}
 	h.hub.register <- client
+
+	// Đăng ký user vào các nhóm mà user tham gia
 	groupClient := groups.NewGroupServiceClient(h.grpcClient)
 	ctx, cancel := context.WithTimeout(c.Request().Context(), time.Second*2)
 	defer cancel()
@@ -227,11 +262,14 @@ func (h *HttpHandler) WebSocketHandler(c echo.Context) error {
 			h.hub.RegisterUserToGroup(group.ID, userID)
 		}
 	}
+
+	// Chạy các goroutine để xử lý đọc/ghi
 	go client.WritePump()
 	go client.ReadPump()
 
 	return nil
 }
+
 func (h *HttpHandler) GetUserGroupsWithLatestMessage(c echo.Context) error {
 	userID := c.Get("user_id").(int32)
 
