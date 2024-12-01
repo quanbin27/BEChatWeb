@@ -11,6 +11,7 @@ service MessageService{
 message Message{
   int32 ID = 1;
   int32 UserID = 2;
+  string UserName=7;
   int32 GroupID = 3;
   string Content = 4;
   int32 MessageReplyID=5;
@@ -25,6 +26,7 @@ message SendMessageRequest {
 message SendMessageResponse {
   int32 MessageID = 1;
   google.protobuf.Timestamp CreatedAt = 2;
+
 }
 message GetMessagesRequest {
   int32 UserID=1;

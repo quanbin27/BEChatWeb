@@ -14,6 +14,17 @@ type ContactStore struct {
 func NewContactStore(db *gorm.DB) *ContactStore {
 	return &ContactStore{db: db}
 }
+func (s *ContactStore) IsContactPendingOrAccepted(userID, contactUserID int32) (bool, error) {
+	var count int64
+	err := s.db.Model(&types.Contact{}).
+		Where("(user_id = ? AND contact_user_id = ? OR user_id = ? AND contact_user_id = ?) AND status IN (?, ?)",
+			userID, contactUserID, contactUserID, userID, "PENDING", "ACCEPTED").
+		Count(&count).Error
+	if err != nil {
+		return false, fmt.Errorf("ContactStore.IsContactPendingOrAccepted: %w", err)
+	}
+	return count > 0, nil
+}
 
 // Thêm liên hệ
 func (s *ContactStore) AddContact(contact *types.Contact) error {
