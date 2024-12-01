@@ -248,9 +248,9 @@ class Chat{
             chatListRight.className = 'chat-list right'
             const btnDelete = chatListRight.querySelector('.delete-item');
                 btnDelete.onclick = async ()=>{
-                    const messageResponse = await this.deleteMessage(messageData.ID);
+                    const messageResponse = await this.deleteMessage(conversation.ID);
                     if(messageResponse==='success'){
-                        this.userConversation.removeChild(message);
+                        this.userConversation.removeChild(chatListRight);
                     }
                 }
         }
@@ -427,7 +427,7 @@ class Chat{
                 <img src = ${image_path} style = 'width:2.4rem; height:2.4rem; border-radius:50%!important;'>
                 <div style = 'display:flex; flex-direction:column'>
                     <span style= 'font-size: medium; font-weight:600;' class = 'groupname'>${groupData.group_name}</span>
-                    <span  class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:180px;'>${groupData.latest_message}</span>
+                    <span  class = 'last-message' style = 'text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width:180px;'>${groupData.latest_message==null?'':groupData.latest_message}</span>
                 </div>
             </div>
         `
@@ -658,7 +658,9 @@ class Chat{
         const li = this.findMessageLiInConversation(messageId);
         if(li == null) return;
         li.querySelector('.mb-0.ctext-content').textContent = 'The user has deleted the message.'
-        li.querySelector('.ctext-wrap-content').style.backgroundColor = 'white';
+        const temp = li.querySelector('.ctext-wrap-content')
+        temp.style.backgroundColor = 'white';
+        temp.style.opacity = '0.5';
         // if(li!=null)
         //     this.userConversation.removeChild(li);
     }
@@ -1248,6 +1250,7 @@ class Contact{
                 </button>
                 <a class = 'btn-delete'>Delete</a>
             `
+            li.setAttribute('email',contact.email);
             const showDeleteBtn = li.querySelector('.delete-contact');
             const btnDelete = li.querySelector('.btn-delete');
             showDeleteBtn.onclick = ()=>{
@@ -1333,7 +1336,6 @@ class Contact{
             )
         }
         async function checkIsSent(email,token){
-            // let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmVkQXQiOjE3MzMyOTg4MzksInVzZXJfaWQiOiIyIn0.srJB58MbZbN76nxOw3QEPq2-xJkw60Grl9dtugo_EOM'
             return fetch('/api/v1/contact/pending-sent',{
                 headers:{
                     'authorization':`Bearer ${token}`
@@ -1365,19 +1367,35 @@ class Contact{
                     }
                     const div = this.createFindedContact(contact);
                     const btnAdd = div.querySelector('.btn.btn-add-contact');
-                    const is_sent = await checkIsSent(email,token);
+                    let is_sent = await checkIsSent(email,token);
+                    const contacts = await this.getContacts();
                     if(is_sent == true){
                         btnAdd.innerHTML = this.getCheckSvg();
                         btnAdd.onclick = null;
                     }
                     else{
-                        btnAdd.onclick = async ()=>{
-                           
-                            const result = await addContact(contact,token);
-                            if(result === 'success'){
-                                btnAdd.innerHTML = this.getCheckSvg();
+                        const ul = this.contactDiv.querySelector('ul');
+                        const list = ul.querySelectorAll('li');
+                        for(let li of list ){
+                            let emailOfContact = li.getAttribute('email');
+                            if(emailOfContact == email){
+                                is_sent = true;
+                                break;
                             }
                         }
+                        if(is_sent == true){
+                            btnAdd.innerHTML = this.getFriendSvg();
+                            btnAdd.onclick = null;
+                        }
+                        else{
+                            btnAdd.onclick = async ()=>{
+                               
+                                const result = await addContact(contact,token);
+                                if(result === 'success'){
+                                    btnAdd.innerHTML = this.getCheckSvg();
+                                }
+                            }
+                        } 
                     }
                     this.findedContactWrapper.appendChild(div);
                 }
@@ -1393,6 +1411,11 @@ class Contact{
         <circle opacity="0.5" cx="12" cy="12" r="10" stroke="#1C274C" stroke-width="1.5"/>
         <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`
+    }
+    getFriendSvg(){
+        return `
+        <svg fill='black' width="20px" height="20px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="#000000" fill="none"><circle cx="22.83" cy="22.57" r="7.51"/><path d="M38,49.94a15.2,15.2,0,0,0-15.21-15.2h0a15.2,15.2,0,0,0-15.2,15.2Z"/><circle cx="44.13" cy="27.22" r="6.05"/><path d="M42.4,49.94h14A12.24,12.24,0,0,0,44.13,37.7h0a12.21,12.21,0,0,0-5.75,1.43"/></svg> 
+        `
     }
     createFindedContact(contactInfo){
         console.log(contactInfo)
@@ -1509,10 +1532,6 @@ class Socket{
     socket(){
         const socket = new WebSocket(`ws://${window.location.hostname}:1000/api/v1/ws/${this.store.profile.getToken()}`);
         
-        window.addEventListener('beforeunload', () => {
-            alert('a')
-            socket.close();
-        });
         socket.onmessage =async (event) => {
             const message = JSON.parse(event.data);
             console.log(message)
