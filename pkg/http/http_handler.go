@@ -599,14 +599,18 @@ func (h *HttpHandler) SendMessageHandler(c echo.Context) error {
 		Content:        payload.Content,
 		MessageReplyID: getReplyMessageID(payload.MessageReplyID),
 	})
+	userClient := users.NewUserServiceClient(h.grpcClient)
+	userInfo, err := userClient.GetUserInfo(ctx, &users.GetUserInfoRequest{ID: userID})
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to send message: " + err.Error()})
 	}
 	messageData := map[string]interface{}{
-		"group_id": payload.GroupID,
-		"user_id":  userID,
-		"content":  payload.Content,
-		"func":     "sendMessage",
+		"group_id":   payload.GroupID,
+		"user_id":    userID,
+		"content":    payload.Content,
+		"func":       "sendMessage",
+		"message_id": res.MessageID,
+		"user_name":  userInfo.Name,
 	}
 	messageBytes, err := json.Marshal(messageData)
 	if err != nil {
@@ -870,6 +874,7 @@ func (h *HttpHandler) AddMemberHandler(c echo.Context) error {
 		GroupID:   int32(groupID),
 		MemberIDs: payload.MemberIds,
 	})
+	groupInfo, err := groupClient.GetGroupInfo(ctx, &groups.GetGroupInfoRequest{GroupID: int32(groupID)})
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
@@ -877,10 +882,10 @@ func (h *HttpHandler) AddMemberHandler(c echo.Context) error {
 		h.hub.RegisterUserToGroup(int32(groupID), userid)
 	}
 	messageData := map[string]interface{}{
-		"group_id": int32(groupID),
-		"owner_id": userID,
-		"func":     "addMember",
-	}
+		"group_id":   int32(groupID),
+		"owner_id":   userID,
+		"func":       "addMember",
+		"group_name": groupInfo.Name}
 	messageBytes, err := json.Marshal(messageData)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to encode message"})

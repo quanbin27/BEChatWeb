@@ -53,6 +53,7 @@ type ContactStore interface {
 	GetPendingSentContacts(userID int32) ([]Contact, error)
 	GetFriendIDs(userID int32) ([]int32, error)
 	GetContactsNotInGroup(userID int32, groupID int32) ([]Contact, error)
+	IsContactPendingOrAccepted(userID, contactUserID int32) (bool, error)
 }
 type UserService interface {
 	CreateUser(ctx context.Context, user *users.RegisterRequest) error
@@ -79,7 +80,7 @@ type GroupService interface {
 type MessageService interface {
 	DeleteMessage(ctx context.Context, req *messages.DeleteMessageRequest) (int32, error)
 	GetLatestMessages(ctx context.Context, req *messages.GetLatestMessagesRequest) (Message, error)
-	GetMessages(ctx context.Context, req *messages.GetMessagesRequest) ([]Message, error)
+	GetMessages(ctx context.Context, req *messages.GetMessagesRequest) ([]*messages.Message, error)
 	SendMessage(ctx context.Context, req *messages.SendMessageRequest) (int32, time.Time, error)
 }
 type ContactService interface {

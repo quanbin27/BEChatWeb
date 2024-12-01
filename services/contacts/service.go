@@ -20,6 +20,13 @@ func NewContactService(store types.ContactStore, groupStore types.GroupStore, us
 }
 
 func (s *ContactService) AddContact(ctx context.Context, req *contacts.AddContactRequest) error {
+	isPendingOrAccepted, err := s.store.IsContactPendingOrAccepted(req.UserId, req.ContactUserId)
+	if err != nil {
+		return fmt.Errorf("failed to check contact status: %w", err)
+	}
+	if isPendingOrAccepted {
+		return errors.New("contact already exists or is pending approval")
+	}
 	if req.UserId == req.ContactUserId {
 		return errors.New("can't add yourself")
 	}
@@ -29,7 +36,7 @@ func (s *ContactService) AddContact(ctx context.Context, req *contacts.AddContac
 		Status:        "PENDING",
 	}
 
-	err := s.store.AddContact(contact)
+	err = s.store.AddContact(contact)
 	if err != nil {
 		return fmt.Errorf("failed to add contact: " + err.Error())
 	}

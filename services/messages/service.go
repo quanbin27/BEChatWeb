@@ -6,16 +6,18 @@ import (
 	"fmt"
 	"github.com/quanbin27/gRPC-Web-Chat/services/common/genproto/messages"
 	"github.com/quanbin27/gRPC-Web-Chat/services/types"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
 )
 
 type MessageService struct {
 	store      types.MessageStore
 	groupStore types.GroupStore
+	userStore  types.UserStore
 }
 
-func NewMessageService(messageStore types.MessageStore, groupStore types.GroupStore) *MessageService {
-	return &MessageService{messageStore, groupStore}
+func NewMessageService(messageStore types.MessageStore, groupStore types.GroupStore, userStore types.UserStore) *MessageService {
+	return &MessageService{messageStore, groupStore, userStore}
 }
 func (s *MessageService) SendMessage(ctx context.Context, req *messages.SendMessageRequest) (int32, time.Time, error) {
 	if req.Content == "" {
@@ -62,7 +64,7 @@ func (s *MessageService) SendMessage(ctx context.Context, req *messages.SendMess
 	return messageID, createdAt, nil
 }
 
-func (s *MessageService) GetMessages(ctx context.Context, req *messages.GetMessagesRequest) ([]types.Message, error) {
+func (s *MessageService) GetMessages(ctx context.Context, req *messages.GetMessagesRequest) ([]*messages.Message, error) {
 	roleID, err := s.groupStore.GetRoleIDByUserAndGroup(req.UserID, req.GroupID)
 	if err != nil {
 		return nil, err
@@ -70,11 +72,23 @@ func (s *MessageService) GetMessages(ctx context.Context, req *messages.GetMessa
 	if roleID == 0 {
 		return nil, errors.New("User is not authorized to view messages in this group")
 	}
-	messages, err := s.store.GetMessages(req.GroupID)
+	messagesDb, err := s.store.GetMessages(req.GroupID)
 	if err != nil {
 		return nil, err
 	}
-	return messages, nil
+	var messagesGrpc []*messages.Message
+	for _, msg := range messagesDb {
+		userInfo, _ := s.userStore.GetUserByID(msg.UserID)
+		messagesGrpc = append(messagesGrpc, &messages.Message{
+			ID:        msg.ID,
+			UserID:    msg.UserID,
+			GroupID:   msg.GroupID,
+			Content:   msg.Content,
+			CreatedAt: timestamppb.New(msg.CreatedAt),
+			UserName:  userInfo.Name,
+		})
+	}
+	return messagesGrpc, nil
 }
 
 func (s *MessageService) GetLatestMessages(ctx context.Context, req *messages.GetLatestMessagesRequest) (types.Message, error) {

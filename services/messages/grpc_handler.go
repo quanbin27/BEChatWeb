@@ -36,27 +36,9 @@ func (h *MessageGrpcHandler) GetMessages(ctx context.Context, req *messages.GetM
 	if err != nil {
 		return nil, fmt.Errorf("failed to get messages: %v", err)
 	}
-	var grpcMessages []*messages.Message
-	for _, msg := range ListMessages {
-		var messageReplyID int32
-		if msg.ReplyMessageID != nil {
-			messageReplyID = *msg.ReplyMessageID
-		} else {
-			messageReplyID = 0
-		}
-
-		grpcMessages = append(grpcMessages, &messages.Message{
-			ID:             msg.ID,
-			UserID:         msg.UserID,
-			GroupID:        msg.GroupID,
-			Content:        msg.Content,
-			MessageReplyID: messageReplyID,
-			CreatedAt:      timestamppb.New(msg.CreatedAt),
-		})
-	}
 
 	return &messages.GetMessagesResponse{
-		Messages: grpcMessages,
+		Messages: ListMessages,
 	}, nil
 }
 
