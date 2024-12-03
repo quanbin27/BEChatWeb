@@ -556,6 +556,7 @@ class Chat{
             if(role === 'member'){
                 if(member.UserID==this.store.profile.user_id){
                     temp.removeChild(btnRole);
+                    btnDelete.textContent = 'Leave';
                     btnDelete.onclick = async ()=>{
                         let token = this.store.profile.getToken();
                         const message = await leaveGroup(currentConversationId,token);
@@ -1124,7 +1125,7 @@ class Contact{
         function createPendingContactElement(contact){
             console.log('pending contact',contact);
             let image_path = 'assets/images/users/user-dummy-img.jpg';
-            if(contact.avatar === null){
+            if(contact.avatar == null){
                 contact.avatar = image_path;
             }
             const li = document.createElement('li');
@@ -1405,7 +1406,7 @@ class Contact{
         this.contactDiv.innerHTML = ''
         const ul = document.createElement('ul');
         ul.className = 'list-unstyled';
-        let image_path = 'assets/image/users/user-dummy-img.jpg';
+        let image_path = 'assets/images/users/user-dummy-img.jpg';
         for(let contact of contacts){
             const contactInfo = await this.getContactInfo(contact.user_id)
             if(contactInfo.avatar!=null)
@@ -1591,6 +1592,9 @@ class Contact{
     }
     createFindedContact(contactInfo){
         console.log(contactInfo)
+        if(contactInfo.avatar == null){
+            contactInfo.avatar = 'assets/images/users/user-dummy-img.jpg';
+        }
         const contact = document.createElement('div');
         contact.className = 'result';
         contact.innerHTML = `
@@ -1787,7 +1791,12 @@ class Profile{
                 const userInfo = await response.json()
                 this.email = userInfo.Email;
                 this.username = userInfo.Name;
-                this.avatar = userInfo.avatar;
+                if(userInfo.avatar == null){
+                    this.avatar = 'assets/images/users/user-dummy-img.jpg';
+                }
+                else{
+                    this.avatar = userInfo.avatar;
+                }
                 this.user_id = userInfo.ID;
             }
             else{
