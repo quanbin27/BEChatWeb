@@ -180,14 +180,15 @@ type GroupDetail struct {
 // ------MESSAGE -------
 
 type Message struct {
-	ID             int32      `gorm:"primaryKey;autoIncrement" json:"id"`
-	UserID         int32      `gorm:"not null" json:"user_id"`
-	GroupID        int32      `gorm:"not null" json:"group_id"`
-	Content        string     `gorm:"type:text" json:"content"`
-	ReplyMessageID *int32     `gorm:"index" json:"reply_message_id,omitempty"`
-	ReplyMessage   *Message   `gorm:"foreignKey:ReplyMessageID;constraint:OnDelete:CASCADE" json:"reply_message,omitempty"`
-	CreatedAt      time.Time  `gorm:"autoCreateTime" json:"created_at"`
-	DeletedAt      *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	ID             int32     `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserID         int32     `gorm:"not null" json:"user_id"`
+	GroupID        int32     `gorm:"not null" json:"group_id"`
+	Content        string    `gorm:"type:text" json:"content"`
+	ReplyMessageID *int32    `gorm:"index" json:"reply_message_id,omitempty"`
+	ReplyMessage   *Message  `gorm:"foreignKey:ReplyMessageID;constraint:OnDelete:CASCADE" json:"reply_message,omitempty"`
+	CreatedAt      time.Time `gorm:"autoCreateTime" json:"created_at"`
+	User           User      `gorm:"foreignKey:UserID;references:ID" json:"user"`
+	Group          Group     `gorm:"foreignKey:GroupID;references:ID;constraint:OnDelete:CASCADE" json:"group"`
 }
 type SendMessagePayload struct {
 	GroupID        int32  `json:"group_id" validate:"required"`

@@ -606,7 +606,7 @@ class Chat{
         if(chat == null)
             chat = this.favouriteGroups.querySelector(`li[data-chat-id="${chatData.group_id}"]`);
         if(chat == null) alert('lỗi ở select chat');
-        
+        chatData.image_path = 'assets/images/group.jpg'
         this.userName.textContent = chatData.group_name;
         this.profileUsername.textContent = chatData.group_name;
         this.profileUsername1.textContent = chatData.group_name;

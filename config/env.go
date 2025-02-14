@@ -17,7 +17,7 @@ var Envs = initConfig()
 func initConfig() Config {
 	godotenv.Load()
 	return Config{
-		DSN:                    getEnv("DSN", "root:27052002@tcp(127.0.0.1:3306)/WebChat?charset=utf8mb4&parseTime=True&loc=Local"),
+		DSN:                    getEnv("DSN", ""),
 		JWTExpirationInSeconds: getEnvAsInt("JWT_EXPIRATION", 3600*24*7),
 		JWTSecret:              getEnv("JWT_SECRET", "not-secret-anymore?"),
 	}

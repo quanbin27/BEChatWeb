@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"log"
 	"net/http"
 )
@@ -19,7 +20,8 @@ var Validate = validator.New()
 
 func (s *HttpServer) Run() error {
 	e := echo.New()
-	conn := NewGRPCClient(":9000")
+	e.Use(middleware.Logger())
+	conn := NewGRPCClient("grpc-server:9000")
 	defer conn.Close()
 	viewHandler := NewHandler()
 	viewHandler.RegisterRoutes(e)

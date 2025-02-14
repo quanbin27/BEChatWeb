@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  mysql:
+    platform: linux/amd64
+    image: mysql/mysql-server:8.0.23
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 27052002
+      MYSQL_DATABASE: WebChat
+    ports:
+      - "3306:3306"
+    networks:
+      - my_network
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+  grpc-server:
+    depends_on:
+      - mysql
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DSN: "root:27052002@tcp(mysql:3306)/WebChat?charset=utf8mb4&parseTime=True&loc=Local"
+    command: ["/root/grpc-server"]
+    ports:
+      - "9000:9000"
+    networks:
+      - my_network
+
+  api-gateway:
+    depends_on:
+      - grpc-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["/root/api-gateway"]
+    ports:
+      - "1000:1000"
+    networks:
+      - my_network
+
+networks:
+  my_network:
+volumes:
+  mysql_data:
